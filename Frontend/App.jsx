@@ -1,11 +1,12 @@
 import React from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 
+import SplashScreen from './screens/Splash';
 const App = () => {
   return (
-    <View style={styles.container}>
-      <Text>Hello, World!</Text>
-    </View>
+    <SplashScreen>
+      
+    </SplashScreen>
   );
 };
 

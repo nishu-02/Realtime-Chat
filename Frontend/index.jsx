@@ -1,5 +1,5 @@
 import { registerRootComponent } from 'expo';
-import App from './App';  // Import the main App component
+import App from './App';
 
-// Automatically registers the component for Expo
+
 registerRootComponent(App);

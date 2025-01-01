@@ -1,0 +1,8 @@
+run-android:
+	cd Frontend && npm run android
+
+run-ios:
+	cd Frontend && npm run ios -- --simulator=''
+
+server:
+	cd core && python manage.py runserver

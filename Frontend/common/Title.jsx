@@ -11,6 +11,7 @@ export default function Title( {text}) {
         fontFamily: 'Rubik Vinyl'}}>
         {text}
       </Text>
+      <Text style = {{color:'white'}}>                                                        --By Nishant Garg</Text>
     </View>
   )
 }

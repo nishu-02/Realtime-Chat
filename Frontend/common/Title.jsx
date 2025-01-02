@@ -8,7 +8,10 @@ export default function Title( {text}) {
         textAlign: 'center',
         fontSize: 42,
         fontWeight: '400',
-        fontFamily: 'Rubik Vinyl'}}>
+        fontFamily: 'Rubik Vinyl',
+        marginBottom:40
+        }}
+      >
         {text}
       </Text>
       {/* <Text style = {{color:'white'}}>                                                        --By Nishant Garg</Text> */}

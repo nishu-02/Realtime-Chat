@@ -1,7 +1,9 @@
-import { View, Text, StyleSheet, TextInput } from 'react-native'
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, onPress } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Title from '../common/Title';
+import { useNavigation } from '@react-navigation/native';
+
 
 function Input({ title}) {
   return (
@@ -21,13 +23,46 @@ function Input({ title}) {
   )
 };
 
+function Button({ title}) {
+  return (
+    <TouchableOpacity
+      style = {{
+        backgroundColor: 'teal',
+        height: 53,
+        borderRadius: 34,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginLeft : 34,
+        marginRight: 34,
+        marginTop:23,
+      }}
+    >
+      <Text style = {styles.item}>
+        {title}
+      </Text>
+    </TouchableOpacity>
+  )
+};
+
 function SignIn() {
+  const navigation = useNavigation();
   return (
     <SafeAreaView style = {{ flex: 1}}>
       <View style = { styles.content }>
+
       <Title text = 'Realtime Chat' color= "Black" />
+      
       <Input title = 'Username' />
       <Input title = 'Secret Key' />
+      
+      <Button title = 'Sign In' />
+      
+      <Text>Don't have an account yet!
+        <Text style = {{color:'black'}} onPress={ () => navigation.navigate('SignUp')}>
+          Sign up
+        </Text>
+      </Text>
+      
       </View>
     </SafeAreaView>
   )
@@ -38,7 +73,6 @@ export default SignIn;
 const styles = StyleSheet.create({
   content : {
     justifyContent:'center',
-    // alignItems: 'center',
     backgroundColor: 'thistle',
     flex : 1,    
   },
@@ -46,7 +80,6 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 19,
     marginVertical : 6,
-    paddingLeft : 10,
+    paddingLeft : 13,
   }
-
 });

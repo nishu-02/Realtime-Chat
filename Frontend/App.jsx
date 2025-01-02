@@ -4,6 +4,8 @@ import {StyleSheet, StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import './src/fontawesome';
+
 import SplashScreen from './screens/Splash';
 import SignIn from './screens/SignIn';
 import SignUp from './screens/SignUp';

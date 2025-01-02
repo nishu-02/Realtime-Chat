@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, StatusBar, Animated } from 'react-native';
+import {StyleSheet, StatusBar, Animated } from 'react-native';
 import React, { useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Title from '../common/Title';

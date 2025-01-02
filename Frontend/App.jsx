@@ -1,7 +1,7 @@
-import React from 'react';
-import {StyleSheet, StatusBar } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, StatusBar } from 'react-native';
 
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import './src/fontawesome';
@@ -13,36 +13,45 @@ import MessageScreen from './screens/Message';
 import SearchScreen from './screens/Search';
 import HomeScreen from './screens/Home';
 
-const stack = createNativeStackNavigator();
-function App() {
+const LightTheme = {
+  ...DefaultTheme,
+  dark: false,
+  colors: {
+    ...DefaultTheme.colors,
+    background: 'white',
+  },
+};
 
-  const[intialized] = useState(false);
-  const[authenticated] =useState(false);
+const Stack = createNativeStackNavigator();
+
+function App() {
+  const [initialized] = useState(true);
+  const [authenticated] = useState(false);
 
   return (
-    <NavigationContainer>
-      <StatusBar barStyle={dark-content} />
-      <Stack.Navigatior>
-        {!intialized ? (
-        <>
-          <Stack.Screen name="Splash" component={SplashScreen} options={{ headerShown: false}} />
-        </>
-        ) : !authenticated ?(
+    <NavigationContainer theme={LightTheme}>
+      <StatusBar barStyle="dark-content" />
+      <Stack.Navigator>
+        {!initialized ? (
           <>
-          <Stack.Screen name="SignIn" component={SignIn} />
-          <Stack.Screen name="SignUp" component={SignUp} />
-        </>
+            <Stack.Screen name="Splash" component={SplashScreen} options={{ headerShown: false }} />
+          </>
+        ) : !authenticated ? (
+          <>
+            <Stack.Screen name="SignIn" component={SignIn} options={{ headerShown: false }} />
+            <Stack.Screen name="SignUp" component={SignUp} options={{ headerShown: false }} />
+          </>
         ) : (
           <>
-          <Stack.Screen name="Home" component={HomeScreen} options = {{ headerShown: false}}/>
-          <Stack.Screen name="Search" component={SearchScreen} />
-          <Stack.Screen name="Message" component={MessageScreen} />        
-        </>          
-        )}     
-        </Stack.Navigatior>
+            <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Search" component={SearchScreen} />
+            <Stack.Screen name="Message" component={MessageScreen} />
+          </>
+        )}
+      </Stack.Navigator>
     </NavigationContainer>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {

@@ -1,40 +1,64 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, onPress } from 'react-native'
-import React from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, onPress } from 'react-native'
+import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native';
 import Title from '../common/Title';
 import Button from '../common/Button';
+import Input from '../common/Input';
 
-function Input({ title}) {
-  return (
-    <View>
-      <Text style = {styles.item}> {title} </Text>
-      <TextInput 
-        style = {{
-          backgroundColor: 'white',
-          borderRadius:18,
-          height:43,
-          paddingHorizontal: 34,
-          marginLeft:14,
-          marginRight:14,
-        }}
-      />
-    </View>
-  )
-};
+function onSignIn() {
+  console.log("clicked" , username, password);
+
+  // checking the username
+  const failUsername = !username;
+  if(failUsername) {
+    setUsernameError('Username is not provided');
+  }
+  
+  // checking the password
+  const failPassword = !password;
+  if(failPassword) {
+    setPasswordError('Password is Wrong Folk');
+  }
+  // Break out of this function if there were any error
+  if (failUsername || failPassword) {
+    return
+  }
+  // Make singIn request
+}
+
 
 function SignIn() {
   const navigation = useNavigation();
+
+  const[username, setUsername] = useState('');
+  const[password, setPassword] = useState('');
+
+  const[usernameError, setUsernameError] = useState('');
+  const[passwordError, setPasswordError] = useState('');
+
   return (
     <SafeAreaView style = {{ flex: 1}}>
       <View style = { styles.content }>
 
       <Title text = 'Realtime Chat' color= "Black" />
       
-      <Input title = 'Username' />
-      <Input title = 'Secret Key' />
+      <Input 
+        title = 'Username'
+        value={username}
+        error={usernameError}
+        setValue={setUsername}
+        setError={setUsernameError}
+      />
+      <Input 
+        title = 'Secret Key'
+        value={password}
+        error={passwordError}
+        setValue={setPassword}
+        setError={setPasswordError}
+      />
       
-      <Button title = 'Sign In' />
+      <Button title = 'Sign In' onPress={onSignIn} />
       
       <Text>Don't have an account yet!
         <Text style = {{color:'black'}} onPress={ () => navigation.navigate('SignUp')}>

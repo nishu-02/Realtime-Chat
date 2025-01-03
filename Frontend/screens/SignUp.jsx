@@ -2,24 +2,7 @@ import { View, Text, StyleSheet } from "react-native";
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../common/Button";
-
-function Input({ title }) {
-  return (
-    <View>
-      <Text style={styles.item}> {title} </Text>
-      <TextInput
-        style={{
-          backgroundColor: "white",
-          borderRadius: 18,
-          height: 43,
-          paddingHorizontal: 34,
-          marginLeft: 14,
-          marginRight: 14,
-        }}
-      />
-    </View>
-  );
-}
+import Input from "../common/Input";
 
 function SignUp({ navigation }) {
   return (
@@ -47,9 +30,7 @@ function SignUp({ navigation }) {
           Already have an account?
           <Text
             style={{ color: "black" }}
-            onPress={() => navigation.goBack(
-              
-            )}
+            onPress={() => navigation.goBack()}
           >
             Sign up
           </Text>

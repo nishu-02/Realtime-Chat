@@ -1,9 +1,9 @@
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, onPress } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import Title from '../common/Title';
 import { useNavigation } from '@react-navigation/native';
-
+import Title from '../common/Title';
+import Button from '../common/Button';
 
 function Input({ title}) {
   return (
@@ -20,27 +20,6 @@ function Input({ title}) {
         }}
       />
     </View>
-  )
-};
-
-function Button({ title}) {
-  return (
-    <TouchableOpacity
-      style = {{
-        backgroundColor: 'teal',
-        height: 53,
-        borderRadius: 34,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginLeft : 34,
-        marginRight: 34,
-        marginTop:23,
-      }}
-    >
-      <Text style = {styles.item}>
-        {title}
-      </Text>
-    </TouchableOpacity>
   )
 };
 
@@ -73,7 +52,7 @@ export default SignIn;
 const styles = StyleSheet.create({
   content : {
     justifyContent:'center',
-    backgroundColor: 'thistle',
+    backgroundColor: 'rgba(54, 184, 184, 0.6)',
     flex : 1,    
   },
   item : {

@@ -6,28 +6,6 @@ import Title from '../common/Title';
 import Button from '../common/Button';
 import Input from '../common/Input';
 
-function onSignIn() {
-  console.log("clicked" , username, password);
-
-  // checking the username
-  const failUsername = !username;
-  if(failUsername) {
-    setUsernameError('Username is not provided');
-  }
-  
-  // checking the password
-  const failPassword = !password;
-  if(failPassword) {
-    setPasswordError('Password is Wrong Folk');
-  }
-  // Break out of this function if there were any error
-  if (failUsername || failPassword) {
-    return
-  }
-  // Make singIn request
-}
-
-
 function SignIn() {
   const navigation = useNavigation();
 
@@ -36,6 +14,27 @@ function SignIn() {
 
   const[usernameError, setUsernameError] = useState('');
   const[passwordError, setPasswordError] = useState('');
+
+  function onSignIn() {
+    console.log("clicked" , username, password);
+  
+    // checking the username
+    const failUsername = !username;
+    if(failUsername) {
+      setUsernameError('Username is not provided');
+    }
+    
+    // checking the password
+    const failPassword = !password;
+    if(failPassword) {
+      setPasswordError('Password is Wrong Folk');
+    }
+    // Break out of this function if there were any error
+    if (failUsername || failPassword) {
+      return
+    }
+    // Make singIn request
+  }
 
   return (
     <SafeAreaView style = {{ flex: 1}}>

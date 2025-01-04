@@ -22,8 +22,10 @@ export default Input;
 
 const styles = StyleSheet.create({
     item : {
-        color: error ? 'red': 'teal,
+        color: error ? 'red': 'teal',
         fontSize: 19,
+        borderWidth:1,
+        borderColor: error ? 'red' : 'transparent',
         marginVertical : 6,
         paddingLeft : 13,
     },

@@ -5,12 +5,14 @@ function Input({ title, value,error, setValue, setError}) {
       <View>
         <Text style = {styles.item}> { error ? error :title} </Text>
         <TextInput 
+          autoCapitalize="none"
+          autoComplete="off"
           style = {styles.in}
           value={value}
           onChangeText={text => {
             setValue(text)
             if (error) {
-                setError(' ')
+                setError('')
             }
           }}
         />
@@ -22,10 +24,10 @@ export default Input;
 
 const styles = StyleSheet.create({
     item : {
-        color: error ? 'red': 'teal',
+        color:'teal',
         fontSize: 19,
         borderWidth:1,
-        borderColor: error ? 'red' : 'transparent',
+        borderColor:'transparent',
         marginVertical : 6,
         paddingLeft : 13,
     },

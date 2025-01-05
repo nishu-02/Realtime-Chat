@@ -55,8 +55,12 @@ function SignInScreen() {
       }
     })
     .then(response => { // this is a promise
+      const credentials = {
+        username: username,
+        password: password
+      }
       utils.log('Sign In:', response.data);
-      login(response.data)
+      login(response.data.user)
     })
     .catch(error => {
       if (error.response) {

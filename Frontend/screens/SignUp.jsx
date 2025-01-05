@@ -77,7 +77,15 @@ function SignUp({ navigation }) {
     })
     .then(response => { // this is a promise
       utils.log('Sign Up:', response.data);
-      login(response.data);
+      
+      const credentials = {
+        username: username,
+        password: password
+      }
+      login(
+        credentials,
+        response.data.user
+      );
     })
     .catch(error => {
       if (error.response) {

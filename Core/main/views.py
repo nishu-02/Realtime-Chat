@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken  # allows to manually c
 from .serializers import UserSerializer
 
 def get_auth_for_user(user):
-    tokens = RefreshToken.for_user(user)
+    # tokens = RefreshToken.for_user(user)
     return {
         'user': UserSerializer(user).data #pass the data to the serializer
     }

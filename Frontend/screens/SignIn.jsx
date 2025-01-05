@@ -13,6 +13,7 @@ import Title from "../common/Title";
 import Button from "../common/Button";
 import Input from "../common/Input";
 import api from "../core/api";
+import utils from "../core/utils";
 
 function SignIn() {
   const navigation = useNavigation();
@@ -51,7 +52,7 @@ function SignIn() {
       }
     })
     .then(response => { // this is a promise
-      console.log('Sign In:', response.data);
+      utils.log('Sign In:', response.data);
     })
     .catch(error => {
       if (error.response) {

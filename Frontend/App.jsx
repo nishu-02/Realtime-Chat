@@ -26,7 +26,7 @@ const Stack = createNativeStackNavigator();
 
 function App() {
   const [initialized] = useState(true);
-  const [authenticated] = useState(false);
+  const [authenticated] = useState(true);
 
   return (
     <NavigationContainer theme={LightTheme}>
@@ -43,7 +43,7 @@ function App() {
           </>
         ) : (
           <>
-            <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }}/>
             <Stack.Screen name="Search" component={SearchScreen} />
             <Stack.Screen name="Message" component={MessageScreen} />
           </>

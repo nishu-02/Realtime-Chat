@@ -14,8 +14,9 @@ import Button from "../common/Button";
 import Input from "../common/Input";
 import api from "../core/api";
 import utils from "../core/utils";
+import useGlobal from "./core/globalStore";
 
-function SignIn() {
+function SignInScreen() {
   const navigation = useNavigation();
 
   const [username, setUsername] = useState("");
@@ -23,6 +24,8 @@ function SignIn() {
 
   const [usernameError, setUsernameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+
+  const login = useGlobal(state => state.login);
 
   function onSignIn() {
     console.log("clicked", username, password);
@@ -53,6 +56,7 @@ function SignIn() {
     })
     .then(response => { // this is a promise
       utils.log('Sign In:', response.data);
+      login(response.data)
     })
     .catch(error => {
       if (error.response) {
@@ -112,7 +116,7 @@ function SignIn() {
   );
 }
 
-export default SignIn;
+export default SignInScreen;
 
 const styles = StyleSheet.create({
   content: {

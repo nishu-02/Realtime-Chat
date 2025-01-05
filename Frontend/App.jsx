@@ -7,11 +7,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import './src/fontawesome';
 
 import SplashScreen from './screens/Splash';
-import SignIn from './screens/SignIn';
+import SignInScreen from './screens/SignIn';
 import SignUp from './screens/SignUp';
 import MessageScreen from './screens/Message';
 import SearchScreen from './screens/Search';
 import HomeScreen from './screens/Home';
+
+import useGlobal from "./core/globalStore";
 
 const LightTheme = {
   ...DefaultTheme,
@@ -26,8 +28,7 @@ const Stack = createNativeStackNavigator();
 
 function App() {
   const [initialized] = useState(true);
-  const [authenticated] = useState(false);
-
+  const authenticated = useGlobal(state => state.authenticated);
   return (
     <NavigationContainer theme={LightTheme}>
       <StatusBar barStyle="dark-content" />
@@ -38,7 +39,7 @@ function App() {
           </>
         ) : !authenticated ? (
           <>
-            <Stack.Screen name="SignIn" component={SignIn} options={{ headerShown: false }} />
+            <Stack.Screen name="SignIn" component={SignInScreen} options={{ headerShown: false }} />
             <Stack.Screen name="SignUp" component={SignUp} options={{ headerShown: false }} />
           </>
         ) : (

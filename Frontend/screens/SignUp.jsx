@@ -6,6 +6,7 @@ import Button from "../common/Button";
 import Input from "../common/Input";
 import api from "../core/api";
 import utils from "../core/utils";
+import useGlobal from "@/core/globalStore";
 
 function SignUp({ navigation }) {
   const [username, setUsername] = useState("");
@@ -19,6 +20,8 @@ function SignUp({ navigation }) {
   const [lastNameError, setLastNameError] = useState("");
   const [password1Error, setPassword1Error] = useState("");
   const [password2Error, setPassword2Error] = useState("");
+
+  const login = useGlobal(state => state.login);
 
   function onSignUp() {
     setUsernameError("");
@@ -74,6 +77,7 @@ function SignUp({ navigation }) {
     })
     .then(response => { // this is a promise
       utils.log('Sign Up:', response.data);
+      login(response.data);
     })
     .catch(error => {
       if (error.response) {

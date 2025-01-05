@@ -30,6 +30,9 @@ function ProfileLogout() {
 }
 
 function ProfileScreen() {
+
+  const user = useGlobal(state => state.user);
+
   return (
     <View style = { styles.container}>
     <Image source = { require('../assets/thumbnail.png')} 
@@ -37,8 +40,8 @@ function ProfileScreen() {
         width: 90, height: 90, borderRadius: 89, backgroundColor: 'e0e0e0', marginBottom:20,
       }}
     />   
-      <Text style = { styles.content }>Nishant Garg</Text>
-      <Text style = { styles.username }>@nishu__0264</Text>
+      <Text style = { styles.content }> { user.name } </Text>
+      <Text style = { styles.username }>@{ user.username }</Text>
 
       <ProfileLogout />
     </View>
@@ -59,6 +62,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginTop: 6,
+    marginBottom:2,
   },
   username: {
     textAlign: 'center',

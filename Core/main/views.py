@@ -4,7 +4,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken  # allows to manually create the tokens(user)
-from .serializers import UserSerializer
+from .serializers import UserSerializer, SignUpSerializer
 
 def get_auth_for_user(user):
     tokens = RefreshToken.for_user(user)
@@ -15,9 +15,7 @@ def get_auth_for_user(user):
             'access': str(tokens.access_token),
             'refresh': str(tokens),
          }    
-    }#getting the tokens for the custom authentication
-
-
+    } #getting the tokens for the custom authentication
 
 class SignInView(APIView):
     persmission_classes = [AllowAny]
@@ -35,3 +33,16 @@ class SignInView(APIView):
         user_data= get_auth_for_user(user)
 
         return Response(user_data)
+    
+class SignUpView(APIView):
+    persmission_classes = [AllowAny]
+
+    def post(self, request):
+        new_user = SignUpSerializer(data = request.data)
+        new_user.is_valid(raise_exception=True)
+        user = new_user.save()
+
+        user_data= get_auth_for_user(user)
+
+        return Response(user_data)
+    

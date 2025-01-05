@@ -1,8 +1,11 @@
 import { View, Text, StyleSheet, TouchableWithoutFeedback, Keyboard } from "react-native";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import Button from "../common/Button";
 import Input from "../common/Input";
+import api from "../core/api";
+import utils from "../core/utils";
 
 function SignUp({ navigation }) {
   const [username, setUsername] = useState("");
@@ -59,8 +62,37 @@ function SignUp({ navigation }) {
     // If any errors exist, prevent form submission
     if (hasError) return;
 
-    console.log("Form submitted successfully");
-    // Proceed with form submission logic
+    api({
+      method: "POST", // the method
+      url: '/main/signup/',
+      data: {
+        username: username,
+        first_name: firstName,
+        last_name: lastName,
+        password: password1,
+      }
+    })
+    .then(response => { // this is a promise
+      utils.log('Sign Up:', response.data);
+    })
+    .catch(error => {
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.log(error.response.data);
+        console.log(error.response.status);
+        console.log(error.response.headers);
+      } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        console.log(error.request);
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.log('Error', error.message);
+      }
+      console.log(error.config);
+    }) // the error type if of axios (this is beacuse error can be come in any of the form)
   }
 
   return (

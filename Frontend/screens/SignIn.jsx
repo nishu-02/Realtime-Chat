@@ -51,7 +51,7 @@ function SignIn() {
       }
     })
     .then(response => { // this is a promise
-      console.log('Sign In:', response);
+      console.log('Sign In:', response.data);
     })
     .catch(error => {
       if (error.response) {

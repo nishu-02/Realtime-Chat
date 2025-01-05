@@ -7,10 +7,18 @@ from rest_framework_simplejwt.tokens import RefreshToken  # allows to manually c
 from .serializers import UserSerializer
 
 def get_auth_for_user(user):
-    # tokens = RefreshToken.for_user(user)
+    tokens = RefreshToken.for_user(user)
+    # print('token', type(tokens), tokens)
     return {
-        'user': UserSerializer(user).data #pass the data to the serializer
-    }
+        'user': UserSerializer(user).data, #pass the data to the serializer
+        'tokens' : {
+            'access': str(tokens.access_token),
+            'refresh': str(tokens),
+         }    
+    }#getting the tokens for the custom authentication
+
+
+
 class SignInView(APIView):
     persmission_classes = [AllowAny]
 

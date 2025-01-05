@@ -14,7 +14,7 @@ import Button from "../common/Button";
 import Input from "../common/Input";
 import api from "../core/api";
 import utils from "../core/utils";
-import useGlobal from "./core/globalStore";
+import useGlobal from "../core/globalStore";
 
 function SignInScreen() {
   const navigation = useNavigation();

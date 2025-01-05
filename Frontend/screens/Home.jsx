@@ -1,4 +1,4 @@
-import {TouchableOpacity, View } from 'react-native';
+import {TouchableOpacity, View, Image } from 'react-native';
 import React from 'react';
 import { FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 
@@ -16,8 +16,11 @@ function HomeScreen() {
       screenOptions={({route, navigation}) => ({
         headerLeft: () => (
           <View style = {{ marginLeft: 10 ,width: 30, height: 30, borderRadius: 10, backgroundColor: 'e0e0e0'}}>
-            {/* <Image source = { require('../assets/profile.png')} /> */}
-          
+            <Image source = { require('../assets/thumbnail.png')} 
+             style = {{
+              width: 30, height: 30, borderRadius: 10,
+             }}
+            />          
           </View>
         ),
         headerRight: () => (

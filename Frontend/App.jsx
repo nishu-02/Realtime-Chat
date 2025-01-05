@@ -26,7 +26,7 @@ const Stack = createNativeStackNavigator();
 
 function App() {
   const [initialized] = useState(true);
-  const [authenticated] = useState(true);
+  const [authenticated] = useState(false);
 
   return (
     <NavigationContainer theme={LightTheme}>

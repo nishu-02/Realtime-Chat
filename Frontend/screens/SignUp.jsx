@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableWithoutFeedback, Keyboard } from "react-native";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../common/Button";
@@ -18,7 +18,6 @@ function SignUp({ navigation }) {
   const [password2Error, setPassword2Error] = useState("");
 
   function onSignUp() {
-    
     setUsernameError("");
     setFirstNameError("");
     setLastNameError("");
@@ -66,58 +65,60 @@ function SignUp({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Sign Up</Text>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.container}>
+          <Text style={styles.title}>Sign Up</Text>
 
-        <Input
-          title="Username"
-          value={username}
-          error={usernameError}
-          setValue={setUsername}
-          setError={setUsernameError}
-        />
+          <Input
+            title="Username"
+            value={username}
+            error={usernameError}
+            setValue={setUsername}
+            setError={setUsernameError}
+          />
 
-        <Input
-          title="First Name"
-          value={firstName}
-          error={firstNameError}
-          setValue={setFirstName}
-          setError={setFirstNameError}
-        />
+          <Input
+            title="First Name"
+            value={firstName}
+            error={firstNameError}
+            setValue={setFirstName}
+            setError={setFirstNameError}
+          />
 
-        <Input
-          title="Last Name"
-          value={lastName}
-          error={lastNameError}
-          setValue={setLastName}
-          setError={setLastNameError}
-        />
+          <Input
+            title="Last Name"
+            value={lastName}
+            error={lastNameError}
+            setValue={setLastName}
+            setError={setLastNameError}
+          />
 
-        <Input
-          title="Password"
-          value={password1}
-          error={password1Error}
-          setValue={setPassword1}
-          setError={setPassword1Error}
-        />
+          <Input
+            title="Password"
+            value={password1}
+            error={password1Error}
+            setValue={setPassword1}
+            setError={setPassword1Error}
+          />
 
-        <Input
-          title="Confirm Password"
-          value={password2}
-          error={password2Error}
-          setValue={setPassword2}
-          setError={setPassword2Error}
-        />
+          <Input
+            title="Confirm Password"
+            value={password2}
+            error={password2Error}
+            setValue={setPassword2}
+            setError={setPassword2Error}
+          />
 
-        <Button title="Sign Up" onPress={onSignUp} />
+          <Button title="Sign Up" onPress={onSignUp} />
 
-        <Text style={styles.footerText}>
-          Already have an account?{" "}
-          <Text style={styles.linkText} onPress={() => navigation.goBack()}>
-            Log in
+          <Text style={styles.footerText}>
+            Already have an account?{" "}
+            <Text style={styles.linkText} onPress={() => navigation.goBack()}>
+              Log in
+            </Text>
           </Text>
-        </Text>
-      </View>
+        </View>
+      </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 }

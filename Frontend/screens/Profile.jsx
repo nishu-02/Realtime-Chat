@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { launchCamera, launchImageLibrary } from "react-native-image-picker";
+import React from 'react';
 
 import useGlobal from "../core/globalStore";
 import utils from "../core/utils";
@@ -19,14 +20,6 @@ function ProfileImage() {
         });
       }}
     >
-      <Image
-        source={require("../assets/thumbnail.png")}
-        style={{
-          width: 30,
-          height: 30,
-          borderRadius: 10,
-        }}
-      />
       <View
         style={{
           position: "absolute",

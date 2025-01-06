@@ -10,7 +10,7 @@ async function set(key, object) {
 
 async function get(key) {
     try {
-        await EncryptedStorage.getItem(key, JSON.stringify(key));
+        const data = await EncryptedStorage.getItem(key)
         if( data !== undefined) {
             return JSON.parse(data);
         }

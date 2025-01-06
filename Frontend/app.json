@@ -4,7 +4,6 @@
     "slug": "Frontend",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/thumbnail.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,27 +12,26 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/thumbnail.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.anonymous.Frontend"
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/thumbnail.png"
+      "output": "static"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/thumbnail.png",
+          "image": null,
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true

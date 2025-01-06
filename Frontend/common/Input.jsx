@@ -1,4 +1,5 @@
 import { View, Text, TextInput, StyleSheet } from 'react-native';
+import React from 'react';
 
 function Input({ title, value, error, setValue, setError }) {
   return (

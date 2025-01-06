@@ -6,9 +6,10 @@ import api from './api';
 const useGlobal = create((set) => ({
     
     //-----------------------//
-    // Intialization
 
-    intialized = false,
+    //-----------------------//
+    // Intialization
+    intialized: false,
     // also can use the promises 
     init: async () => {
         const credentails = await secure.get('credentials');
@@ -40,6 +41,8 @@ const useGlobal = create((set) => ({
             }           
         }
     },
+    
+    //-----------------------//
     
     // Authentication
 

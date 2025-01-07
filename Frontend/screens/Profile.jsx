@@ -1,7 +1,57 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity} from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { launchImageLibrary } from 'react-native-image-picker'
 import useGlobal from '../core/globalStore';
 import React from 'react';
+import utils from '../core/utils';
+
+
+
+
+function ProfileImage() {
+	// const user = useGlobal(state => state.user)
+
+	return (
+		<TouchableOpacity 
+			style={{ marginBottom: 20 }}
+			onPress={() => {
+				launchImageLibrary({ includeBase64: true }, (response) => {
+					utils.log('launchImageLibrary', response)
+					if (response.didCancel) return
+					const file = response.assets[0]
+					// uploadThumbnail(file)
+				})
+			}}
+		>
+      <Image
+        source={require('../assets/thumbnail.png')}
+        style ={{ width:100, height:100, borderRadius: 50 , marginBottom:18}}
+        />
+			{/* <Thumbnair */}
+			<View
+				style={{
+					position: 'absolute',
+					bottom: 0,
+					right: 0,
+					backgroundColor: '#202020',
+					width: 40,
+					height: 40,
+					borderRadius: 20,
+					alignItems: 'center',
+					justifyContent: 'center',
+					borderWidth: 3,
+					borderColor: 'white'
+				}}
+			>
+				<FontAwesomeIcon
+					icon='pencil'
+					size={15}
+					color='#d0d0d0'
+				/>
+			</View>
+		</TouchableOpacity>
+	)
+}
 
 function ProfileLogout() {
 
@@ -41,11 +91,7 @@ function ProfileScreen() {
 
   return (
     <View style = { styles.container}>
-    <Image source = { require('../assets/thumbnail.png')} 
-      style = {{
-        width: 90, height: 90, borderRadius: 89, backgroundColor: 'e0e0e0', marginBottom:20,
-      }}
-    />   
+    <ProfileImage/>
       <Text style={styles.content}>{user.name || "No Name Available"}</Text>
       <Text style={styles.username}>@{user.username || "No Username"}</Text>
 

@@ -4,64 +4,76 @@ import secure from './secure'; // importing the secure function from the secure 
 import api from './api';
 
 const useGlobal = create((set) => ({
+    initialized: false,
+    authenticated : false,
+    user : {},
     
     //-----------------------//
-
-    //-----------------------//
     // Intialization
-    intialized: false,
+
     // also can use the promises 
     init: async () => {
-        const credentails = await secure.get('credentials');
-        if( credentials ){
+        const credentials = await secure.get('credentials');
+        console.log('Fetched credentials:', credentials);
+    
+        if (!credentials || !credentials.username || !credentials.password) {
+            console.error('Invalid credentials:', credentials);
+            return;
+        }
+        if (credentials) {
             try {
-                const response = await api({
-                    method: "POST", // the method
-                    url: '/main/signin/',
-                    data: {
-                      username: credentials.username,
-                      password: credentials.password,
-                    }
-                })
+                // Log the base URL for debugging
+                console.log("Making request to: ", api.defaults.baseURL + 'main/signin/');
+    
+                const response = await api.post('signin/', {
+                    username: credentials.username,
+                    password: credentials.password,
+                });
                 
-                if(!response.status !== 200) {
-                    throw 'Authentication error'
+                console.log('API Response:', response.data);
+    
+                if (response.status !== 200) {
+                    throw 'Authentication error';
                 }
-
+    
                 const user = response.data.user;
                 set((state) => ({
-                    intialized: true,
-                    authenticated: true, 
-                    user: user
-                }))
-                return
+                    initialized: true,
+                    authenticated: true,
+                    user: user,
+                }));
             } catch (error) {
-                console.log('useGlobalinit:', error);
-
-            }           
+                console.log('useGlobal.init error:', error);
+            }
+        } else {
+            console.log('No credentials found');
         }
     },
     
-    //-----------------------//
     
     // Authentication
 
-    authenticated : true,
-    user : {},
+   
 
-    login: (credentials, user) => {
-        secure.set('credentails', credentials);
+    login: (user, tokens) => {
+        secure.set('credentials', {
+          username: user.username,
+          password: user.password,
+        });
+        secure.set('tokens', tokens); // Store the tokens as well
         set((state) => ({
-            authenticated: true, 
-            user: user
-        }))
-    },
+          authenticated: true,
+          user: user,
+          tokens: tokens,  // Store tokens in state
+        }));
+      },
+      
 
     logout: () => {
-        secure.wipe()
+        secure.wipe();
         set((state) => ({
             authenticated: false,
-            user: {}
+            user: {},
         }))
     }
 }))

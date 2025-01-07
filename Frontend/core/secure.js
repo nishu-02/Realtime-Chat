@@ -10,12 +10,14 @@ async function set(key, object) {
 
 async function get(key) {
     try {
-        const data = await EncryptedStorage.getItem(key)
-        if( data !== undefined) {
+        const data = await EncryptedStorage.getItem(key);
+        if (data) {
             return JSON.parse(data);
         }
+        return null;
     } catch (error) {
         console.log('secure.get', error);
+        return null; // Ensure it always returns a value
     }
 }
 
@@ -36,4 +38,3 @@ async function wipe() {
 }
 
 export default { set, get, remove, wipe };
-

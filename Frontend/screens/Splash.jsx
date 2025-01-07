@@ -5,13 +5,13 @@ import Title from '../common/Title';
 export default function SplashScreen() {
 
   const animated = new Animated.Value(0);
-    const duration = 800;
+    const duration = 880;
 
     useEffect (() => {
       Animated.loop(
         Animated.sequence([
           Animated.timing(animated, {
-            toValue: 30,
+            toValue: 15,
             duration: duration,
             useNativeDriver: true
           }),

@@ -25,11 +25,13 @@ function SignInScreen() {
   const [usernameError, setUsernameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
-  const login = useGlobal(state => state.login);
+  const login = useGlobal((state) => state.login);
 
   function onSignIn() {
     console.log("clicked", username, password);
 
+    setUsernameError("");
+    setPasswordError("");
     // checking the username
     const failUsername = !username;
     if (failUsername) {
@@ -46,40 +48,37 @@ function SignInScreen() {
       return;
     }
     // Make singIn request
+    // Proceed with SignIn request
+    console.log("Sending request with username and password:", username, password);
     api({
-      method: "POST", // the method
-      url: '/main/signin/',
+      method: "POST",
+      url: "/main/signin/",
       data: {
         username: username,
-        password: password
-      }
+        password: password,
+      },
     })
-    .then(response => { // this is a promise
-      const credentials = {
-        username: username,
-        password: password
-      }
-      utils.log('Sign In:', response.data);
-      login(response.data.user)
-    })
-    .catch(error => {
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.log(error.response.data);
-        console.log(error.response.status);
-        console.log(error.response.headers);
-      } else if (error.request) {
-        // The request was made but no response was received
-        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-        // http.ClientRequest in node.js
-        console.log(error.request);
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        console.log('Error', error.message);
-      }
-      console.log(error.config);
-    }) // the error type if of axios (this is beacuse error can be come in any of the form)
+      .then((response) => {
+        const credentials = {
+          username: username,
+          password: password,
+        };
+        utils.log("Sign In:", response.data);
+        login(credentials, response.data.user); // Ensure proper data format is passed
+        navigation.navigate("Home"); // Navigate to Home page after successful login
+      })
+      .catch((error) => {
+        // Handle any errors during the API request
+        if (error.response) {
+          console.log("Error response:", error.response.data);
+          console.log("Status:", error.response.status);
+          setPasswordError(error.response.data.error || "An error occurred");
+        } else if (error.request) {
+          console.log("Request error:", error.request);
+        } else {
+          console.log("Error:", error.message);
+        }
+      }); // the error type if of axios (this is beacuse error can be come in any of the form)
   }
 
   return (

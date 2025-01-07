@@ -27,14 +27,14 @@ const LightTheme = {
 const Stack = createNativeStackNavigator();
 
 function App() {
-  const initialized = useState()
-  const authenticated = useGlobal(state => state.authenticated);
+  const initialized = useGlobal((state) => state.initialized)
+	const authenticated = useGlobal((state) => state.authenticated)
 
-  const init = useGlobal(state => state.init);
+	const init = useGlobal((state) => state.init)
 
-  useEffect(() => {
-    init()
-  }, []);
+	useEffect(() => {
+		init()
+	}, [])
   
   return (
     <NavigationContainer theme={LightTheme}>

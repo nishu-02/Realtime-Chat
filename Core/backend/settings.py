@@ -33,6 +33,7 @@ CORS_ALLOWED_ORIGINS = ["http://localhost:8081",]
 INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'django.contrib.admin',
+    'daphne',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -41,6 +42,7 @@ INSTALLED_APPS = [
     'main',
     'rest_framework',
     'corsheaders',
+    
 ]
 
 MIDDLEWARE = [
@@ -62,6 +64,24 @@ REST_FRAMEWORK = {
     )
 }
 #we could have session authentication as well - nishu_02
+
+#Thumnbail uploads
+MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = '/media/'
+
+# channels
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    }
+}
+
+#Daphne
+ASGI_APPLICATION = 'backend.asgi.application'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

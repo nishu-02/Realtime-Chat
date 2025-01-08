@@ -25,9 +25,9 @@ SECRET_KEY = 'django-insecure-v$09o=(9amzo)4-f3puftm@c!j-9bepa8o5(3p=ij5-g(o_lcj
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*' , 'localhost', '192.162.0.2']
 
-CORS_ALLOWED_ORIGINS = ["http://localhost:8081",]
+CORS_ALLOWED_ORIGINS = ["http://localhost:8081", "http://127.0.0.1:5000"]
 # Application definition
 
 INSTALLED_APPS = [
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'main',
     'rest_framework',
     'corsheaders',    
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -50,9 +51,11 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    # 'channels.middleware.BaseMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'django.contrib.auth.backends.ModelBackend',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -69,14 +72,18 @@ MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_ROOT = '/media/'
 
 # channels
+# Channels
+ASGI_APPLICATION = 'backend.asgi.application'
+
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [('localhost', 6379)],  # Redis host and port
         },
-    }
+    },
 }
+
 
 #Daphne
 ASGI_APPLICATION = 'backend.asgi.application'
@@ -153,3 +160,26 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'main.User'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',  # Adjust the log level as needed
+            'propagate': True,
+        },
+        '__name__': {  # Log for this specific module (i.e., ChatConsumer)
+            'handlers': ['console'],
+            'level': 'DEBUG',  # Adjust the log level as needed
+            'propagate': False,
+        },
+    },
+}

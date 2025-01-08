@@ -1,33 +1,30 @@
-"""
-ASGI config for backend project.
-
-It exposes the ASGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
-"""
-
-# Import necessary modules
-import main.routing
+# asgi.py
 import os
+import django
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+django.setup()
+
+from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.security.websocket import AllowedHostsOriginValidator
-from django_channels_jwt_auth_middleware.auth import JWTAuthMiddlewareStack, JWTAuthMiddleware
-from django.core.asgi import get_asgi_application
+from django_channels_jwt_auth_middleware.auth import JWTAuthMiddlewareStack
+import main.routing  # Import from the `maine` app
 
-# Set the default Django settings module for the 'asgi' program
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+# Ensure Django apps are ready
+from django.apps import apps
+apps.check_apps_ready()  # Ensure all apps are loaded before continuing
 
-# Get the ASGI application for handling HTTP requests
+# Get the ASGI application
 django_asgi_app = get_asgi_application()
 
-# Define the ASGI application protocol routing
+# Set up the WebSocket routing with JWT Middleware
 application = ProtocolTypeRouter({
     "http": django_asgi_app,
     "websocket": AllowedHostsOriginValidator(
         JWTAuthMiddlewareStack(
             URLRouter(
-                main.routing.websocket_urlpatterns  # Ensure this is correctly configured in the main app's routing.py
+                main.routing.websocket_urlpatterns  # Correct app routing
             )
         )
     ),

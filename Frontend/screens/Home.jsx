@@ -1,5 +1,5 @@
 import {TouchableOpacity, View, Image } from 'react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -7,10 +7,22 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import ProfileScreen from './Profile';
 import RequestScreen from './Requests';
 import FriendsScreen from './Friends';
+import useGlobal from '../core/globalStore';
 
 const Tab = createBottomTabNavigator();
 
 function HomeScreen() {
+  
+  const socketConnect = useGlobal((state) => state.socketConnect);  
+  const socketClose = useGlobal((state) => state.socketClose);
+
+  useEffect(() => {
+    socketConnect()
+    return () => {
+      socketClose
+    }
+  }, [])
+
   return (
     <Tab.Navigator 
       screenOptions={({route, navigation}) => ({

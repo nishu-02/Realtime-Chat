@@ -52,7 +52,7 @@ function SignInScreen() {
     console.log("Sending request with username and password:", username, password);
     api({
       method: "POST",
-      url: "/main/signin/",
+      url: "signin/",
       data: {
         username: username,
         password: password,
@@ -65,7 +65,7 @@ function SignInScreen() {
         };
         utils.log("Sign In:", response.data);
         login(credentials, response.data.user); // Ensure proper data format is passed
-        navigation.navigate("Home"); // Navigate to Home page after successful login
+        // navigation.navigate("Home"); // Navigate to Home page after successful login
       })
       .catch((error) => {
         // Handle any errors during the API request

@@ -67,7 +67,7 @@ function SignUp({ navigation }) {
 
     api({
       method: "POST", // the method
-      url: '/main/signup/',
+      url: 'signup/',
       data: {
         username: username,
         first_name: firstName,

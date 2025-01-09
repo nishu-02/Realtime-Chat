@@ -31,20 +31,19 @@ CORS_ALLOWED_ORIGINS = ["http://localhost:8081", "http://127.0.0.1:5000"]
 # Application definition
 
 INSTALLED_APPS = [
-    'rest_framework_simplejwt',
     'django.contrib.admin',
-    'daphne',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'main',
     'rest_framework',
-    'corsheaders',    
+    'rest_framework_simplejwt',
+    'corsheaders',
     'channels',
+    'daphne',
+    'main',
 ]
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -55,7 +54,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'django.contrib.auth.backends.ModelBackend',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -71,7 +69,6 @@ REST_FRAMEWORK = {
 MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_ROOT = '/media/'
 
-# channels
 # Channels
 ASGI_APPLICATION = 'backend.asgi.application'
 

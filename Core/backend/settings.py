@@ -42,8 +42,9 @@ INSTALLED_APPS = [
     'corsheaders',
     'channels',
     'daphne',
-    'main',
+    'main.apps.MainConfig',
 ]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

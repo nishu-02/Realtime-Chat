@@ -17,7 +17,7 @@ async function get(key) {
         return null;
     } catch (error) {
         console.log('secure.get', error);
-        return null;
+        return null;t
     }
 }
 

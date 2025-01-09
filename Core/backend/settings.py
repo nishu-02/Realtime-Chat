@@ -31,18 +31,18 @@ CORS_ALLOWED_ORIGINS = ["http://localhost:8081", "http://127.0.0.1:5000"]
 # Application definition
 
 INSTALLED_APPS = [
+    'main.apps.MainConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
+    'daphne',
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
     'channels',
-    'daphne',
-    'main.apps.MainConfig',
+    
 ]
 
 MIDDLEWARE = [

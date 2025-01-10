@@ -1,146 +1,135 @@
-import { create } from 'zustand'; // using the zustand for the global state management but can we use redux(redux-thunx)
-
-import secure from './secure'; // importing the secure function from the secure file
-import api from './api';
-import utils from './utils';
-import { ADDRESS } from './api';
+import { create } from 'zustand';
+import secure from './secure'; // Secure functions for storing tokens and credentials
+import api from './api'; // API setup for making HTTP requests
+import utils from './utils'; // Assuming you have utility functions
+import { ADDRESS } from './api'; // Base API address
 
 const useGlobal = create((set) => ({
+  initialized: false,
+  authenticated: false,
+  user: {},
+  tokens: {},
+  socket: null,
 
+  //------------------------//
+  // Initialization
 
-    initialized: false,
-    authenticated: false,
-    user: {},
+  init: async () => {
+    const credentials = await secure.get('credentials');
+    console.log('Fetched credentials:', credentials);
 
-    //-----------------------//
-    // Intialization
+    if (!credentials || !credentials.username || !credentials.password) {
+      console.error('Invalid credentials:', credentials);
+      return;
+    }
 
-    // also can use the promises 
-    init: async () => {
-        const credentials = await secure.get('credentials');
-        console.log('Fetched credentials:', credentials);
+    try {
+      console.log("Making request to:", api.defaults.baseURL + 'signin/');
+      const response = await api.post('signin/', {
+        username: credentials.username,
+        password: credentials.password,
+      });
 
-        if (!credentials || !credentials.username || !credentials.password) {
-            console.error('Invalid credentials:', credentials);
-            return;
-        }
-        if (credentials) {
-            try {
-                // Log the base URL for debugging
-                console.log("Making request to: ", api.defaults.baseURL + 'signin/');
+      console.log('API Response:', response.data);
 
-                const response = await api.post('signin/', {
-                    username: credentials.username,
-                    password: credentials.password,
-                });
+      if (response.status !== 200) {
+        throw new Error('Authentication error');
+      }
 
-                console.log('API Response:', response.data);
+      const user = response.data.user;
+      const tokens = response.data.tokens;
 
-                if (response.status !== 200) {
-                    throw 'Authentication error';
-                }
+      // Store user and tokens securely
+      await secure.set('user', user);
+      await secure.set('tokens', tokens);
 
-                const user = response.data.user;
-                const tokens = response.data.tokens;
+      set((state) => ({
+        initialized: true,
+        authenticated: true,
+        user: user,
+        tokens: tokens,
+      }));
+    } catch (error) {
+      console.log('useGlobal.init error:', error);
+    }
+  },
 
-                set((state) => ({
-                    initialized: true,
-                    authenticated: true,
-                    user: user,
-                }));
-            } catch (error) {
-                console.log('useGlobal.init error:', error);
-            }
-        } else {
-            console.log('No credentials found');
-        }
-    },
+  //------------------------//
+  // Authentication
 
-    // Authentication
-    login: (credentials, user, tokens) => {
-        console.log('Storing username:', user.username); // Debugging log
-        secure.set('credentials', {
-            username: user.username,
-            password: credentials.password, // Use the original password
-        });
-        secure.set('tokens', tokens);
-        secure.set('username', user.username); // Ensure username is stored here
-        set((state) => ({
-            authenticated: true,
-            user: user,
-            tokens: tokens,
-        }));
-    },
+  login: async (credentials, user, tokens) => {
+    console.log('Storing username:', user.username);
 
+    await secure.set('credentials', {
+      username: user.username,
+      password: credentials.password,
+    });
+    await secure.set('tokens', tokens);
+    await secure.set('username', user.username);
 
-    logout: () => {
-        secure.wipe();
-        set((state) => ({
-            authenticated: false,
-            user: {},
-        }))
-    },
+    set((state) => ({
+      authenticated: true,
+      user: user,
+      tokens: tokens,
+    }));
+  },
 
+  logout: async () => {
+    await secure.wipe();
+    set((state) => ({
+      authenticated: false,
+      user: {},
+      tokens: {},
+    }));
+  },
 
-    //WebSocket
+  //------------------------//
+  // WebSocket
 
-    // as the websocket will receive the data we need to change the global state as well
+  socketConnect: async () => {
+    const tokens = await secure.get('tokens');
+    if (!tokens || !tokens.access) {
+      console.error('No tokens found.');
+      return;
+    }
 
-    socket: null,
+    const socketUrl = `ws://192.168.0.102:5000/chat/?token=${tokens.access}`;
+    console.log('WebSocket URL:', socketUrl);
 
-    socketConnect: async () => {
-        let user = await secure.get('username');
-        if (!user) {
-            console.log('No username found in "username" key. Checking "credentials"...');
-            const credentials = await secure.get('credentials');
-            user = credentials?.username;
-        }
-    
-        if (!user) {
-            console.log('No username found!');
-            return;
-        }
-    
-        console.log('Retrieved username:', user);
-        const socketUrl = `ws://192.168.0.102:5000/chat/?username=${encodeURIComponent(user)}`;
-        console.log("WebSocket URL:", socketUrl);
-    
-        const socket = new WebSocket(socketUrl);
-    
-        socket.onopen = () => {
-            console.log('WebSocket connected');
-        };
-    
-        socket.onmessage = (event) => {
-            console.log('Received message:', event.data);
-        };
-    
-        socket.onerror = (e) => {
-            console.log('WebSocket error:', e.message);
-        };
-    
-        socket.onclose = () => {
-            console.log('WebSocket closed');
-        };
-    
-        set((state) => ({
-            socket,
-        }));
-    },
-    
-    socketClose: () => {
-        set((state) => {
-            if (state.socket) {
-                state.socket.close();
-                console.log('Socket manually closed');
-            } else {
-                console.log('No open WebSocket connection to close');
-            }
-            return { socket: null };
-        });
-    },
-    
+    const socket = new WebSocket(socketUrl);
 
-}))
+    socket.onopen = () => {
+      console.log('WebSocket connected');
+    };
+
+    socket.onmessage = (event) => {
+      console.log('Received message:', event.data);
+    };
+
+    socket.onerror = (e) => {
+      console.error('WebSocket error:', e.message);
+    };
+
+    socket.onclose = () => {
+      console.log('WebSocket closed');
+    };
+
+    set((state) => ({
+      socket,
+    }));
+  },
+
+  socketClose: () => {
+    set((state) => {
+      if (state.socket) {
+        state.socket.close();
+        console.log('Socket manually closed');
+      } else {
+        console.log('No open WebSocket connection to close');
+      }
+      return { socket: null };
+    });
+  },
+}));
 
 export default useGlobal;

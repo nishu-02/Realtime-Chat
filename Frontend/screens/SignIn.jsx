@@ -49,7 +49,11 @@ function SignInScreen() {
     }
     // Make singIn request
     // Proceed with SignIn request
-    console.log("Sending request with username and password:", username, password);
+    console.log(
+      "Sending request with username and password:",
+      username,
+      password
+    );
     api({
       method: "POST",
       url: "signin/",
@@ -63,8 +67,13 @@ function SignInScreen() {
           username: username,
           password: password,
         };
+
+        const tokens = response.data.tokens; // Assuming tokens are returned in response
         utils.log("Sign In:", response.data);
-        login(credentials, response.data.user); // Ensure proper data format is passed
+
+        // Pass credentials, user, and tokens to the login function
+        login(credentials, response.data.user, tokens);
+
         // navigation.navigate("Home"); // Navigate to Home page after successful login
       })
       .catch((error) => {
@@ -72,13 +81,16 @@ function SignInScreen() {
         if (error.response) {
           console.log("Error response:", error.response.data);
           console.log("Status:", error.response.status);
-          setPasswordError(error.response.data.error || "An error occurred");
+          setPasswordError(error.response.data.error || "Invalid credentials");
         } else if (error.request) {
           console.log("Request error:", error.request);
+          setPasswordError("Network error. Please try again.");
         } else {
           console.log("Error:", error.message);
+          setPasswordError("An unexpected error occurred.");
         }
-      }); // the error type if of axios (this is beacuse error can be come in any of the form)
+      });
+    // the error type if of axios (this is beacuse error can be come in any of the form)
   }
 
   return (

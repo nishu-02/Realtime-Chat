@@ -57,17 +57,18 @@ const useGlobal = create((set) => ({
     },
 
     // Authentication
-
-    login: (user, tokens) => {
+    login: (credentials, user, tokens) => {
+        console.log('Storing username:', user.username); // Debugging log
         secure.set('credentials', {
             username: user.username,
-            password: user.password,
+            password: credentials.password, // Use the original password
         });
-        secure.set('tokens', tokens); // Store the tokens as well
+        secure.set('tokens', tokens);
+        secure.set('username', user.username); // Ensure username is stored here
         set((state) => ({
             authenticated: true,
             user: user,
-            tokens: tokens,  // Store tokens in state
+            tokens: tokens,
         }));
     },
 
@@ -88,52 +89,57 @@ const useGlobal = create((set) => ({
     socket: null,
 
     socketConnect: async () => {
-        // Retrieve the tokens from secure storage
-        const tokens = await secure.get('tokens');
-        if (!tokens || !tokens.access) {
-            console.log('No valid token found!');
+        let user = await secure.get('username');
+        if (!user) {
+            console.log('No username found in "username" key. Checking "credentials"...');
+            const credentials = await secure.get('credentials');
+            user = credentials?.username;
+        }
+    
+        if (!user) {
+            console.log('No username found!');
             return;
         }
-        
-        // Extract access token from tokens
-        const accessToken = tokens.access;
-        console.log('Access Token:', accessToken);
-
     
-        // Construct the WebSocket URL with the access token
-        const socketUrl = `ws://192.168.0.102:5000/chat/?token=${encodeURIComponent(accessToken)}`;
+        console.log('Retrieved username:', user);
+        const socketUrl = `ws://192.168.0.102:5000/chat/?username=${encodeURIComponent(user)}`;
         console.log("WebSocket URL:", socketUrl);
     
-        // Initialize the WebSocket connection
-        this.socket = new WebSocket(socketUrl);
+        const socket = new WebSocket(socketUrl);
     
-        this.socket.onopen = () => {
+        socket.onopen = () => {
             console.log('WebSocket connected');
         };
     
-        this.socket.onmessage = (event) => {
+        socket.onmessage = (event) => {
             console.log('Received message:', event.data);
         };
     
-        this.socket.onerror = (e) => {
+        socket.onerror = (e) => {
             console.log('WebSocket error:', e.message);
         };
     
-        this.socket.onclose = () => {
+        socket.onclose = () => {
             console.log('WebSocket closed');
         };
     
-        console.log('Tokens:', tokens);  // Log tokens for debugging
+        set((state) => ({
+            socket,
+        }));
     },
     
     socketClose: () => {
-        if (this.socket) {
-            this.socket.close();
-            console.log('Socket manually closed');
-        } else {
-            console.log('No open WebSocket connection to close');
-        }
-    }
+        set((state) => {
+            if (state.socket) {
+                state.socket.close();
+                console.log('Socket manually closed');
+            } else {
+                console.log('No open WebSocket connection to close');
+            }
+            return { socket: null };
+        });
+    },
+    
 
 }))
 

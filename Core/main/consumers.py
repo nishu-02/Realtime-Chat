@@ -66,7 +66,7 @@ class ChatConsumer(WebsocketConsumer):
         serialized = UserSerializer(user)
 
         # the post and get dont exist so send updated user data including new Thumbnail
-        self.send_group(self.username, 'thumbnail', serialized.data)
+        self.group_send(self.username, 'thumbnail', serialized.data)
 
         # Catch/all broadcast to client helpers
 

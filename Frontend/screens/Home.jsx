@@ -1,4 +1,4 @@
-import { TouchableOpacity, View, Image } from "react-native";
+import { TouchableOpacity, View, OnrPress } from "react-native";
 import React, { useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 
@@ -8,11 +8,10 @@ import ProfileScreen from "./Profile";
 import RequestScreen from "./Requests";
 import FriendsScreen from "./Friends";
 import useGlobal from "../core/globalStore";
-import utils from "../core/utils";
 import Thumbnail from "../common/Thumbnail";
 const Tab = createBottomTabNavigator();
 
-function HomeScreen() {
+function HomeScreen({navigation}) {
   const user = useGlobal((state) => state.user);
   const socketConnect = useGlobal((state) => state.socketConnect);
   const socketClose = useGlobal((state) => state.socketClose);
@@ -24,6 +23,10 @@ function HomeScreen() {
     };
   }, []);
 
+  function onSearch() {
+    navigation.navigate('Search')
+  }
+
   return (
     <Tab.Navigator
       screenOptions={({ route, navigation }) => ({
@@ -33,14 +36,14 @@ function HomeScreen() {
               margin: 14,
             }}
           >
-            <Thumbnail
-              url = {user.thumbnail}
-              size = {45}
-            />
+            <Thumbnail url={user.thumbnail} size={45} />
           </View>
         ),
         headerRight: () => (
-          <TouchableOpacity>
+          <TouchableOpacity 
+          onPress= {onSearch}
+
+          >
             <FontAwesomeIcon
               style={{ marginRight: 18 }}
               icon="magnifying-glass"

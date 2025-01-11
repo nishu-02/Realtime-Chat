@@ -72,7 +72,7 @@ function SignInScreen() {
         utils.log("Sign In:", response.data);
 
         // Pass credentials, user, and tokens to the login function
-        login(credentials, response.data.user, tokens);
+        login(credentials, response.data.user, response.data.tokens);
 
         // navigation.navigate("Home"); // Navigate to Home page after successful login
       })

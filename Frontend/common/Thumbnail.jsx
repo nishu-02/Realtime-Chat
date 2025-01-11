@@ -2,11 +2,13 @@ import utils from '../core/utils.js';
 import { Image} from "react-native";
 import React from 'react';
 
+import useGlobal from '../core/globalStore';
 function Thumbnail({url, size}) {
+    const user = useGlobal((state) => state.user);
     return(
         <Image 
         source= {utils.thumbnail(user.thumbnail)}
-        style = {{ width:180, height:180, borderRadius: size / 2  }}
+        style = {{ width:size, height:size, borderRadius: size / 2  }}
       />
     )
 }

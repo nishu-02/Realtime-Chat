@@ -9,7 +9,7 @@ import RequestScreen from "./Requests";
 import FriendsScreen from "./Friends";
 import useGlobal from "../core/globalStore";
 import utils from "../core/utils";
-
+import Thumbnail from "../common/Thumbnail";
 const Tab = createBottomTabNavigator();
 
 function HomeScreen() {
@@ -30,16 +30,12 @@ function HomeScreen() {
         headerLeft: () => (
           <View
             style={{
-              marginLeft: 10,
-              width: 50,
-              height: 40,
-              borderRadius: 10,
-              backgroundColor: "e0e0e0",
+              margin: 14,
             }}
           >
-            <Image
-              source={utils.thumbnail(user.thumbnail)}
-              style={{ width: 40, height: 40, borderRadius: 45 }}
+            <Thumbnail
+              url = {user.thumbnail}
+              size = {45}
             />
           </View>
         ),

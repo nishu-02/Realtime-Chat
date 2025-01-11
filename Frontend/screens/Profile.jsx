@@ -4,7 +4,7 @@ import { launchImageLibrary } from 'react-native-image-picker'
 import useGlobal from '../core/globalStore';
 import React from 'react';
 import utils from '../core/utils';
-// import Thumbnail from '../assets/thumbnail.png'
+import Thumbnail from '../common/Thumbnail'
 
 function ProfileImage() {
 	const uploadThumbnail = useGlobal(state => state.uploadThumbnail)
@@ -15,16 +15,16 @@ function ProfileImage() {
 			style={{ marginBottom: 20 }}
 			onPress={() => {
 				launchImageLibrary({ includeBase64: true }, (response) => {
-					utils.log('launchImageLibrary', response)
+					// utils.log('launchImageLibrary', response)
 					if (response.didCancel) return
 					const file = response.assets[0]
 					uploadThumbnail(file)
 				})
 			}}
 		>
-			<Image 
-        source= {utils.thumbnail(user.thumbnail)}
-        style = {{ width:180, height:180, borderRadius: 90 }}
+      <Thumbnail
+        url= {user.thumbnail}
+        size={180}
       />
 			<View
 				style={{

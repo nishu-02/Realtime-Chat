@@ -1,22 +1,34 @@
 import { create } from 'zustand';
 import secure from './secure';
-import api from './api'; 
+import api from './api';
 import utils from './utils';
 
+// Initial state definition
+const initialState = {
+  initialized: false,
+  authenticated: false,
+  tokens: {},
+  user: {},
+  socket: null,
+  searchList: null
+};
 
 // Socket receive message handling
+
+function responseSearch(set, get, data) {
+  set((state) => ({
+    searchList: data
+  }));
+}
 
 function responseThumbnail(set, get, data) {
   set((state) => ({
     user: data
-  }))
+  }));
 }
 
-const useGlobal = create((set,get) => ({
-  initialized: false,
-  
-  //------------------------//
-  // Initialization
+const useGlobal = create((set, get) => ({
+  ...initialState,  // Spread the initial state
 
   init: async () => {
     const credentials = await secure.get('credentials');
@@ -24,6 +36,7 @@ const useGlobal = create((set,get) => ({
 
     if (!credentials || !credentials.username || !credentials.password) {
       console.error('Invalid credentials:', credentials);
+      set({ initialized: true }); // Still mark as initialized even if credentials are invalid
       return;
     }
 
@@ -47,23 +60,17 @@ const useGlobal = create((set,get) => ({
       await secure.set('user', user);
       await secure.set('tokens', tokens);
 
-      set((state) => ({
+      set({
         initialized: true,
         authenticated: true,
         user: user,
         tokens: tokens,
-      }));
+      });
     } catch (error) {
       console.log('useGlobal.init error:', error);
+      set({ initialized: true });
     }
   },
-  authenticated: false,
-  tokens: {},
-  user: {},
-
-
-  //------------------------//
-  // Authentication
 
   login: async (credentials, user, tokens) => {
     console.log('Storing username:', user.username);
@@ -75,26 +82,20 @@ const useGlobal = create((set,get) => ({
     await secure.set('tokens', tokens);
     await secure.set('username', user.username);
 
-    set((state) => ({
+    set({
       authenticated: true,
       user: user,
       tokens: tokens,
-    }));
+    });
   },
 
   logout: async () => {
     await secure.wipe();
-    set((state) => ({
-      authenticated: false,
-      user: {},
-      tokens: {},
-    }));
+    set({
+      ...initialState,
+      initialized: true
+    });
   },
-
-  //------------------------//
-  // WebSocket
-  socket: null,
-
 
   socketConnect: async () => {
     const tokens = await secure.get('tokens');
@@ -113,27 +114,21 @@ const useGlobal = create((set,get) => ({
     };
 
     socket.onmessage = (event) => {
-      // console.log('Received message:', event.data);
-      
-      // convert data to js object
-      const parsed = JSON.parse(event.data)
-
-      // log to format the data
+      const parsed = JSON.parse(event.data);
       utils.log('onmessage', parsed);
 
-      // map function to keys
       const response = {
+        'serach': responseSearch,
         'thumbnail': responseThumbnail
+      };
+
+      const resp = response[parsed.source];
+      if (!resp) {
+        utils.log('parsed.source ' + parsed.source + ' not found');
+        return;
       }
 
-      const resp = response[parsed.source]
-      if(!resp) {
-        utils.log('parsed.source ' + parsed.source + ' not found')
-        return
-      }
-
-      // Call response function
-      resp(set, get, parsed.data)
+      resp(set, get, parsed.data);
     };
 
     socket.onerror = (e) => {
@@ -144,9 +139,7 @@ const useGlobal = create((set,get) => ({
       console.log('WebSocket closed');
     };
 
-    set((state) => ({
-      socket,
-    }));
+    set({ socket });
   },
 
   socketClose: () => {
@@ -161,33 +154,26 @@ const useGlobal = create((set,get) => ({
     });
   },
 
-
-  searchList: null,
-  
-  searchUsers: (query) =>{
-    if( query) {
-    const socket = get().socket
+  searchUsers: (query) => {
+    if (query) {
+      const socket = get().socket;
       socket.send(JSON.stringify({
         source: 'search',
         query: query,
       }));
     } else {
-      set((state) => {{
-        searchList: null
-      }}) 
+      set({ searchList: null });
     }
   },
-  
-  uploadThumbnail: (file) =>{
-    const socket = get().socket
+
+  uploadThumbnail: (file) => {
+    const socket = get().socket;
     socket.send(JSON.stringify({
       source: 'thumbnail',
       base64: file.base64,
       filename: file.fileName
     }));
   }
-
-
 }));
 
 export default useGlobal;

@@ -19,7 +19,7 @@ function HomeScreen({navigation}) {
   useEffect(() => {
     socketConnect();
     return () => {
-      socketClose;
+      socketClose();
     };
   }, []);
 

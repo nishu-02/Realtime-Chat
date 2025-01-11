@@ -6,43 +6,39 @@ import Empty from "../common/Empty";
 import Thumbnail from "../common/Thumbnail";
 import useGlobal from "../core/globalStore";
 
-function SearchButton({ user }) {
-  // Add tick if user is already connected
+function SearchButton({ user, onPress }) {
   if (user.status === "connected") {
     return (
       <FontAwesomeIcon
         icon='circle-chevron-down'
         size={28}
         color='#20d080'
-        style={{
-          marginLeft: 220,
-        }}
+        style={{ marginLeft: 220 }}
       />
-    )
+    );
   }
 
-  const data = {};
+  const data = {
+    text: '',
+    disabled: true,
+    onPress: onPress
+  };
 
   switch (user.status) {
     case 'no-connection':
-      data.text = 'Connect'
-      data.disabled = false
-      data.OnPress = () => { }
-      break
-
+      data.text = 'Connect';
+      data.disabled = false;
+      break;
     case 'pending-them':
-      data.text = 'Pending'
-      data.disabled = true
-      data.OnPress = () => { }
-      break
-
+      data.text = 'Pending';
+      data.disabled = true;
+      break;
     case 'pending-me':
-      data.text = 'Accept'
-      data.disabled = false
-      data.OnPress = () => { }
-      break
-
-    default: break
+      data.text = 'Accept';
+      data.disabled = false;
+      break;
+    default:
+      break;
   }
 
   return (
@@ -56,98 +52,66 @@ function SearchButton({ user }) {
         borderRadius: 18,
       }}
       disabled={data.disabled}
-      onPress={data.OnPress}
+      onPress={data.onPress}
     >
-      <Text
-        style={{
-          color: data.disabled ? '#fff' : '#fff',
-          fontWeight: 'bold',
-        }}
-      >
+      <Text style={{
+        color: '#fff',
+        fontWeight: 'bold',
+      }}>
         {data.text}
       </Text>
     </TouchableOpacity>
-  )
+  );
 }
 
 function SearchRow({ user }) {
   return (
-    <View
-      style={{
-        paddingHorizontal: 20,
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderBottomWidth: 2,
-        borderBottomColor: '#ccc',
-        height: 106,
-      }}
-    >
+    <View style={{
+      paddingHorizontal: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderBottomWidth: 2,
+      borderBottomColor: '#ccc',
+      height: 106,
+    }}>
       <Thumbnail
-        path={user.thumbnail}
+        url={user.thumbnail}
         size={56}
       />
-      <Text
-        style={{
-          fontWeight: 'bold',
-          color: 'black',
-          marginBottom: 4,
-          paddingLeft: 34,
-        }}>
+      <Text style={{
+        fontWeight: 'bold',
+        color: 'black',
+        marginBottom: 4,
+        paddingLeft: 34,
+      }}>
         {user.username}
       </Text>
-      <SearchButton  user={user}/>
+      <SearchButton user={user} />
     </View>
-  )
+  );
 }
 
 function SearchScreen() {
-  const [query, setQuery] = useState("");
-
+  const [query, setQuery] = useState('');
   const searchList = useGlobal(state => state.searchList);
   const searchUsers = useGlobal(state => state.searchUsers);
 
   useEffect(() => {
-    searchUsers(query)
-  },[query])
+    // Add a small delay to prevent too frequent API calls
+    const timeoutId = setTimeout(() => {
+      searchUsers(query);
+    }, 300);
 
-  // so what it does it refrehes the results everytime query is changed
-
-  /*const searchList = [
-    {
-      thumbnail: null,
-      name: "hola",
-      username: "arthur",
-      status: "pending-them",
-    },
-    {
-      thumbnail: null,
-      name: "hola amigo",
-      username: "sadie",
-      status: "pending-me",
-    },
-    {
-      thumbnail: null,
-      name: "sun",
-      username: "dutch",
-      status: "connected",
-    },
-    {
-      thumbnail: null,
-      name: "sun flower",
-      username: "micah",
-      status: "no-connection",
-    },
-  ];*/
+    return () => clearTimeout(timeoutId);
+  }, [query]);
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <View
-        style={{
-          padding: 18,
-          borderBottomWidth: 1,
-          borderBottomColor: "beige",
-        }}
-      >
+      <View style={{
+        padding: 18,
+        borderBottomWidth: 1,
+        borderBottomColor: "beige",
+      }}>
         <View>
           <TextInput
             style={{
@@ -158,7 +122,7 @@ function SearchScreen() {
               fontSize: 16,
               paddingLeft: 50,
             }}
-            Value={query}
+            value={query}
             onChangeText={setQuery}
             placeholder="Search...."
             placeholderTextColor="teal"
@@ -166,7 +130,7 @@ function SearchScreen() {
           <FontAwesomeIcon
             icon="search"
             size={22}
-            color={"#000000"}
+            color="#000000"
             style={{
               position: "absolute",
               left: 12,
@@ -185,20 +149,19 @@ function SearchScreen() {
       ) : searchList.length === 0 ? (
         <Empty
           icon="triangle-exclamation"
-          message={"No Users found for " + query + ""}
+          message={`No Users found for ${query}`}
           centered={false}
         />
       ) : (
         <FlatList
           data={searchList}
-          renderItem={({ item }) => (
-            <SearchRow user={item} />
-          )}
+          renderItem={({ item }) => <SearchRow user={item} />}
           keyExtractor={item => item.username}
         />
       )}
     </SafeAreaView>
   );
 }
+
 
 export default SearchScreen;

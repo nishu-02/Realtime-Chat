@@ -4,7 +4,7 @@ import api from './api'; // API setup for making HTTP requests
 import utils from './utils'; // Assuming you have utility functions
 import { ADDRESS } from './api'; // Base API address
 
-const useGlobal = create((set) => ({
+const useGlobal = create((set,get) => ({
   initialized: false,
   authenticated: false,
   user: {},
@@ -130,6 +130,17 @@ const useGlobal = create((set) => ({
       return { socket: null };
     });
   },
+
+  uploadThumbnail: (file) =>{
+    const socket = get().socket
+    socket.send(JSON,stringify)({
+      source: 'thumbanil',
+      base64: file.base64,
+      filename: file.fileName
+    })
+  }
+
+
 }));
 
 export default useGlobal;

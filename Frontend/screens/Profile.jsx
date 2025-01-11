@@ -5,12 +5,9 @@ import useGlobal from '../core/globalStore';
 import React from 'react';
 import utils from '../core/utils';
 
-
-
-
 function ProfileImage() {
-	// const user = useGlobal(state => state.user)
-
+  // const user = useGlobal(state => state.user)
+  const UploadThumbnail = useGlobal(state => state.UploadThumbnail);
 	return (
 		<TouchableOpacity 
 			style={{ marginBottom: 20 }}
@@ -19,7 +16,7 @@ function ProfileImage() {
 					utils.log('launchImageLibrary', response)
 					if (response.didCancel) return
 					const file = response.assets[0]
-					// uploadThumbnail(file)
+					uploadThumbnail(file)
 				})
 			}}
 		>
@@ -27,7 +24,7 @@ function ProfileImage() {
         source={require('../assets/thumbnail.png')}
         style ={{ width:100, height:100, borderRadius: 50 , marginBottom:18}}
         />
-			{/* <Thumbnair */}
+			{/* <Thumbnail */}
 			<View
 				style={{
 					position: 'absolute',

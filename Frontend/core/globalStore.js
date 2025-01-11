@@ -161,6 +161,23 @@ const useGlobal = create((set,get) => ({
     });
   },
 
+
+  searchList: null,
+  
+  searchUsers: (query) =>{
+    if( query) {
+    const socket = get().socket
+      socket.send(JSON.stringify({
+        source: 'search',
+        query: query,
+      }));
+    } else {
+      set((state) => {{
+        searchList: null
+      }}) 
+    }
+  },
+  
   uploadThumbnail: (file) =>{
     const socket = get().socket
     socket.send(JSON.stringify({

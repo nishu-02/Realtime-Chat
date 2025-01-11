@@ -68,7 +68,7 @@ REST_FRAMEWORK = {
 
 #Thumnbail uploads
 MEDIA_ROOT = BASE_DIR / 'media'
-MEDIA_ROOT = '/media/'
+MEDIA_URL = '/media/'
 
 # Channels
 ASGI_APPLICATION = 'backend.asgi.application'

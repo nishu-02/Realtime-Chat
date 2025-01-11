@@ -1,13 +1,15 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity} from 'react-native';
+import { View, Text, Image, TouchableOpacity} from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { launchImageLibrary } from 'react-native-image-picker'
 import useGlobal from '../core/globalStore';
 import React from 'react';
 import utils from '../core/utils';
+// import Thumbnail from '../assets/thumbnail.png'
 
 function ProfileImage() {
-  // const user = useGlobal(state => state.user)
-  const UploadThumbnail = useGlobal(state => state.UploadThumbnail);
+	const uploadThumbnail = useGlobal(state => state.uploadThumbnail)
+	const user = useGlobal(state => state.user)
+
 	return (
 		<TouchableOpacity 
 			style={{ marginBottom: 20 }}
@@ -20,11 +22,10 @@ function ProfileImage() {
 				})
 			}}
 		>
-      <Image
-        source={require('../assets/thumbnail.png')}
-        style ={{ width:100, height:100, borderRadius: 50 , marginBottom:18}}
-        />
-			{/* <Thumbnail */}
+			<Image 
+        source= {utils.thumbnail(user.thumbnail)}
+        style = {{ width:180, height:180, borderRadius: 90 }}
+      />
 			<View
 				style={{
 					position: 'absolute',
@@ -50,73 +51,81 @@ function ProfileImage() {
 	)
 }
 
+
 function ProfileLogout() {
+	const logout = useGlobal(state => state.logout)
 
-  const logout = useGlobal(state => state.logout);
-
-  return (
-    <TouchableOpacity 
-      onPress={logout}
-      style = {{
-        flexDirection: 'row',
-        height: 52,
-        width:120,
-        borderRadius: 26,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'black',
-        paddingHorizontal: '#202020',
-        marginTop: 24,
-        padding:12
-      }}
-    >
-      <FontAwesomeIcon icon="sign-out-alt" color="white" size={14} />
-      <Text style = {[styles.content, { fontSize: 14 , color: 'red', alignSelf: 'center'}]}> Logout? </Text>
-
-    </TouchableOpacity>
-  )
+	return (
+		<TouchableOpacity
+			onPress={logout}
+			style={{
+				flexDirection: 'row',
+				height: 52,
+				borderRadius: 26,
+				alignItems: 'center',
+				justifyContent: 'center',
+				paddingHorizontal: 26,
+				backgroundColor: '#202020',
+				marginTop: 40
+			}}
+		>
+			<FontAwesomeIcon
+				icon='right-from-bracket'
+				size={20}
+				color='#d0d0d0'
+				style={{ marginRight: 12}}
+			/>
+			<Text
+				style={{
+					fontWeight: 'bold',
+					color: '#d0d0d0'
+				}}
+			>
+				Logout
+			</Text>
+		</TouchableOpacity>
+	)
 }
+
+
 
 function ProfileScreen() {
+	const user = useGlobal(state => state.user)
+	return (
+		<View
+			style={{
+				flex: 1,
+				alignItems: 'center',
+				paddingTop: 100
+			}}
+		>
+			<ProfileImage />
 
-  const user = useGlobal((state) => state.user);
+			<Text 
+				style={{
+					textAlign: 'center',
+					color: '#303030',
+					fontSize: 20,
+					fontWeight: 'bold',
+					marginBottom: 6
+				}}
+			>
+				{user.name}
+			</Text>
+			<Text
+				style={{
+					textAlign: 'center',
+					color: '#606060',
+					fontSize: 14
+				}}
+			>
+				@{user.username}
+			</Text>
 
-  if (!user || Object.keys(user).length === 0) {
-      console.log("User data not available in global store");
-      return <Text>Loading or User not authenticated...</Text>;
-  }
+			<ProfileLogout />
 
-  return (
-    <View style = { styles.container}>
-    <ProfileImage/>
-      <Text style={styles.content}>{user.name || "No Name Available"}</Text>
-      <Text style={styles.username}>@{user.username || "No Username"}</Text>
-
-      <ProfileLogout />
-    </View>
-  )
+		</View>
+	)
 }
 
-export default ProfileScreen;
-
-const styles = StyleSheet.create({
-  container : {
-    flex : 1,
-    alignItems: 'center',
-    paddingTop: 100,
-  },
-  content : {
-    textAlign: 'center',
-    color: '#303030',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 6,
-    marginBottom:2,
-    color:'red',
-  },
-  username: {
-    textAlign: 'center',
-    color: 'red',
-    fontSize: 14,
-  }
-});
+export default ProfileScreen

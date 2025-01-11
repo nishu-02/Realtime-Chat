@@ -70,7 +70,7 @@ class ChatConsumer(WebsocketConsumer):
 
         # Catch/all broadcast to client helpers
 
-        def send_group(self, group, source, data):
+        def group_send(self, group, source, data):
             response = {
                 'type': 'broadcast_group',
                 'source': source,
@@ -82,3 +82,19 @@ class ChatConsumer(WebsocketConsumer):
         )
 
         #calling this response will call the function name broadcast_group
+        def broadcast_group(self, data):
+            '''
+            data :
+                type: 'broadcast_group'
+                source: where it is originated from
+                data: the data that is being send as dict
+            '''
+            data.pop('type')
+            '''
+            return data :
+                source: where it is originated from
+                data: the data that is being send as dict
+            '''
+            self.send(text_data=json.dumps(data)) # send the data back to the websocket
+
+        

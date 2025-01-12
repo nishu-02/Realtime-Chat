@@ -166,6 +166,18 @@ const useGlobal = create((set, get) => ({
     }
   },
 
+  requestList: null,
+
+  requestConnect: (username) => {
+    const socket = get().socket;
+      socket.send(JSON.stringify({
+        source: 'request.connect',
+        username: username,
+      })); 
+    }
+  },
+  
+
   uploadThumbnail: (file) => {
     const socket = get().socket;
     socket.send(JSON.stringify({

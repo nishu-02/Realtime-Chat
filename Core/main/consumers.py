@@ -3,7 +3,10 @@ import json
 
 from channels.generic.websocket import WebsocketConsumer
 from django.core.files.base import ContentFile
-from .serializers import UserSerializer
+from .serializers import UserSerializer, SearchSerializer, RequestSerializer
+from django.db.models import Q
+
+from . models import User
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
@@ -45,10 +48,64 @@ class ChatConsumer(WebsocketConsumer):
         # python dict
         print('receive', json.dumps(data, indent=2))
 
+        # Search / filter users
+        if data_source == 'search':
+            self.receive_search(data)
+
+        # Make friend request
+        if data_source == 'request.connect':
+            self.receive_request_connect(data)
+
         # Thumbnail upload
-        if data_source == 'thumbnail':
+        elif data_source == 'thumbnail':
             # Save the thumbnail to the user's profile
             self.receive_thumbnail(data)
+
+
+    def receive_request_connect(self, data):
+        username = data.get('username')
+        #Attempt to fetch the receivieng user
+
+        try:
+            receiver = User.objects.get(username=username)
+        except User.DoesNotExist:
+            print('Error: User does not exist')
+            return
+        
+        #create connection
+        connection, _ = Connection.objects.get_or_create(
+            sender = self.scope['user'],
+            receiver = receiver
+        )
+
+        # Serailized Connections
+        serialized = RequestSerializer(connection)
+        # send back to sender
+        self.group_send(connection.sender.username, 'request.coonect', SearchSerializer.data)
+
+    def search_data(self, data):
+        query = data.get('query')
+
+        # Get user from query search term
+        users = User.objects.filter(
+            Q(username_isstartswith=query) |
+            Q(first_name_isstartswith=query) |
+            Q(last_name_isstartswith=query) 
+        ).exclude(
+            # it is building the query in the backend so it hits the database when you say and dont call ourselves
+            username=self.username
+        )
+        # .annotate(
+        #     pending_them=Exists
+        #     pending_me=...
+        #     connected=...
+        #     #this doesnt hits the databse multiple times so all query in the single
+        # )
+
+        # serialize results
+        serailized = SearchSerializer(users, many=True)
+        # Send search results back
+        send.group_send(self.username, 'search', serialized.data)
 
     def receive_thumbnail(self, data):
         user = self.scope['user']

@@ -1,7 +1,7 @@
 #rules for the djangorestframework for the values
 
 from rest_framework import serializers
-from .models import User
+from .models import User, Connection
 
 class SignUpSerializer(serializers.ModelSerializer):
     class Meta:
@@ -42,3 +42,32 @@ class UserSerializer(serializers.ModelSerializer):
         fname = obj.first_name.capitalize()
         lname = obj.last_name.capitalize()
         return fname + ' ' + lname
+    
+#subclassing the user so that we have that info
+class SearchSerializer(UserSerializer):
+    status = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'username',
+            'name',
+            'thumbnail',
+            'status',
+        ]
+
+    def get_status(self, obj):
+        return 'no-connection'
+    
+class RequestSerializer(serializers.ModelSerializer):
+    sender = UserSerializer()
+    receiver = UserSerializer()
+
+    class Meta:
+        model = Connection 
+        field = [
+            'id',
+            'sender',
+            'receiver',
+            'created'
+        ]

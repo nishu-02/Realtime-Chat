@@ -18,6 +18,8 @@ function SearchButton({ user, onPress }) {
     );
   }
 
+  const requestConnect = useGlobal(state => state.requestConnect);
+
   const data = {
     text: '',
     disabled: true,
@@ -28,6 +30,7 @@ function SearchButton({ user, onPress }) {
     case 'no-connection':
       data.text = 'Connect';
       data.disabled = false;
+      data.onPress = () => requestConnect(user.username);
       break;
     case 'pending-them':
       data.text = 'Pending';
@@ -162,6 +165,5 @@ function SearchScreen() {
     </SafeAreaView>
   );
 }
-
 
 export default SearchScreen;

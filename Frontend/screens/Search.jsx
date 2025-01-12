@@ -1,4 +1,11 @@
-import { View, TextInput, SafeAreaView, FlatList, Text, TouchableOpacity } from "react-native";
+import {
+  View,
+  TextInput,
+  SafeAreaView,
+  FlatList,
+  Text,
+  TouchableOpacity,
+} from "react-native";
 import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 
@@ -6,38 +13,38 @@ import Empty from "../common/Empty";
 import Thumbnail from "../common/Thumbnail";
 import useGlobal from "../core/globalStore";
 
-function SearchButton({ user, onPress }) {
+function SearchButton({ user}) {
   if (user.status === "connected") {
     return (
       <FontAwesomeIcon
-        icon='circle-chevron-down'
+        icon="circle-chevron-down"
         size={28}
-        color='#20d080'
+        color="#20d080"
         style={{ marginLeft: 220 }}
       />
     );
   }
 
-  const requestConnect = useGlobal(state => state.requestConnect);
+  const requestConnect = useGlobal((state) => state.requestConnect);
 
   const data = {
-    text: '',
+    text: "",
     disabled: true,
-    onPress: onPress
+    onPress: onPress,
   };
 
   switch (user.status) {
-    case 'no-connection':
-      data.text = 'Connect';
+    case "no-connection":
+      data.text = "Connect";
       data.disabled = false;
       data.onPress = () => requestConnect(user.username);
       break;
-    case 'pending-them':
-      data.text = 'Pending';
+    case "pending-them":
+      data.text = "Pending";
       data.disabled = true;
       break;
-    case 'pending-me':
-      data.text = 'Accept';
+    case "pending-me":
+      data.text = "Accept";
       data.disabled = false;
       break;
     default:
@@ -47,20 +54,22 @@ function SearchButton({ user, onPress }) {
   return (
     <TouchableOpacity
       style={{
-        backgroundColor: data.disabled ? '#ccc' : '#20d080',
+        backgroundColor: data.disabled ? "#ccc" : "#20d080",
         paddingHorizontal: 16,
         height: 36,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
         borderRadius: 18,
       }}
       disabled={data.disabled}
       onPress={data.onPress}
     >
-      <Text style={{
-        color: '#fff',
-        fontWeight: 'bold',
-      }}>
+      <Text
+        style={{
+          color: "#fff",
+          fontWeight: "bold",
+        }}
+      >
         {data.text}
       </Text>
     </TouchableOpacity>
@@ -69,24 +78,25 @@ function SearchButton({ user, onPress }) {
 
 function SearchRow({ user }) {
   return (
-    <View style={{
-      paddingHorizontal: 20,
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderBottomWidth: 2,
-      borderBottomColor: '#ccc',
-      height: 106,
-    }}>
-      <Thumbnail
-        url={user.thumbnail}
-        size={56}
-      />
-      <Text style={{
-        fontWeight: 'bold',
-        color: 'black',
-        marginBottom: 4,
-        paddingLeft: 34,
-      }}>
+    <View
+      style={{
+        paddingHorizontal: 20,
+        flexDirection: "row",
+        alignItems: "center",
+        borderBottomWidth: 2,
+        borderBottomColor: "#ccc",
+        height: 106,
+      }}
+    >
+      <Thumbnail url={user.thumbnail} size={56} />
+      <Text
+        style={{
+          fontWeight: "bold",
+          color: "black",
+          marginBottom: 4,
+          paddingLeft: 34,
+        }}
+      >
         {user.username}
       </Text>
       <SearchButton user={user} />
@@ -95,9 +105,13 @@ function SearchRow({ user }) {
 }
 
 function SearchScreen() {
-  const [query, setQuery] = useState('');
-  const searchList = useGlobal(state => state.searchList);
-  const searchUsers = useGlobal(state => state.searchUsers);
+  const [query, setQuery] = useState("");
+  const searchList = useGlobal((state) => state.searchList);
+  const searchUsers = useGlobal((state) => state.searchUsers);
+
+  useEffect(() => {
+    console.log('Query changed to:', query);
+  }, [query]);
 
   useEffect(() => {
     // Add a small delay to prevent too frequent API calls
@@ -110,11 +124,13 @@ function SearchScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <View style={{
-        padding: 18,
-        borderBottomWidth: 1,
-        borderBottomColor: "beige",
-      }}>
+      <View
+        style={{
+          padding: 18,
+          borderBottomWidth: 1,
+          borderBottomColor: "beige",
+        }}
+      >
         <View>
           <TextInput
             style={{
@@ -158,8 +174,11 @@ function SearchScreen() {
       ) : (
         <FlatList
           data={searchList}
-          renderItem={({ item }) => <SearchRow user={item} />}
-          keyExtractor={item => item.username}
+          renderItem={({ item }) => {
+            console.log("Rendering item:", item); // Log each rendered item
+            return <SearchRow user={item} />;
+          }}
+          keyExtractor={(item) => item.username}
         />
       )}
     </SafeAreaView>

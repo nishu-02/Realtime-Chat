@@ -1,12 +1,10 @@
-import base64
-import json
-
 from channels.generic.websocket import WebsocketConsumer
 from django.core.files.base import ContentFile
-from .serializers import UserSerializer, SearchSerializer, RequestSerializer
+import base64
+import json
 from django.db.models import Q
-
-from . models import User
+from .serializers import UserSerializer, SearchSerializer, RequestSerializer
+from .models import User, Connection
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
@@ -37,124 +35,132 @@ class ChatConsumer(WebsocketConsumer):
             self.channel_name  
         )
 
-    
     # Handle Requests
-
-    def receive (self, text_data):
+    def receive(self, text_data):
         # Receive message from websocket
         data = json.loads(text_data)
         data_source = data.get('source')
-        
+
         # python dict
         print('receive', json.dumps(data, indent=2))
 
-        # Search / filter users
-        if data_source == 'search':
-            self.receive_search(data)
-
         # Make friend request
-        elif data_source == 'request.connect':
+        if data_source == 'request.connect':
             self.receive_request_connect(data)
+        
+        # Get request List
+        elif data_source == 'request.list':
+            self.receive_request_list(data)      
+        
+        # Search / filter users
+        elif data_source == 'search':
+            self.receive_search(data)
 
         # Thumbnail upload
         elif data_source == 'thumbnail':
             # Save the thumbnail to the user's profile
             self.receive_thumbnail(data)
 
-
     def receive_request_connect(self, data):
         username = data.get('username')
-        #Attempt to fetch the receivieng user
-
+        # Attempt to fetch the receiving user
         try:
             receiver = User.objects.get(username=username)
         except User.DoesNotExist:
             print('Error: User does not exist')
             return
         
-        #create connection
+        # Create connection
         connection, _ = Connection.objects.get_or_create(
-            sender = self.scope['user'],
-            receiver = receiver
+            sender=self.scope['user'],
+            receiver=receiver
         )
 
-        # Serailized Connections
+        # Serialized Connections
         serialized = RequestSerializer(connection)
-        # send back to sender
-        self.group_send(connection.sender.username, 'request.coonect', serialized.data)
 
-        # send to receiver
-        self.group_send(connection.receiver.username, 'request.connect', serialized.data)
+        # Send back to sender
+        self.send_group(connection.sender.username, 'request.connect', serialized.data)
 
-    def search_data(self, data):
+        # Send to receiver
+        self.send_group(connection.receiver.username, 'request.connect', serialized.data)
+
+    def receive_request_list(self, data):
+        user = self.scope['user']
+        # Get all connections for the user
+        connections = Connection.objects.filter(
+            receiver=user,
+            accepted=False,
+        )
+        serialized = RequestSerializer(connections, many=True)
+
+        # Sending list back to the user
+        self.send_group(user.username, 'request.list', serialized.data)
+
+    def receive_search(self, data):
         query = data.get('query')
 
         # Get user from query search term
         users = User.objects.filter(
-            Q(username_isstartswith=query) |
-            Q(first_name_isstartswith=query) |
-            Q(last_name_isstartswith=query) 
+            Q(username__istartswith=query) |
+            Q(first_name__istartswith=query) |
+            Q(last_name__istartswith=query) 
         ).exclude(
-            # it is building the query in the backend so it hits the database when you say and dont call ourselves
+            # Avoid including the current user in the search results
             username=self.username
         )
-        # .annotate(
-        #     pending_them=Exists
-        #     pending_me=...
-        #     connected=...
-        #     #this doesnt hits the databse multiple times so all query in the single
-        # )
+        # Serialize results
+        serialized = SearchSerializer(users, many=True)
 
-        # serialize results
-        serailized = SearchSerializer(users, many=True)
         # Send search results back
-        send.group_send(self.username, 'search', serialized.data)
+        self.send_group(self.username, 'search', serialized.data)
 
     def receive_thumbnail(self, data):
         user = self.scope['user']
         # Save the thumbnail to the user's profile
 
-        # Convert base64 data to django content file
+        # Convert base64 data to Django content file
         image_str = data.get('base64')
         image = ContentFile(base64.b64decode(image_str))
 
-        #Update thumbnail filed
+        # Update thumbnail field
         filename = data.get('filename')
         user.thumbnail.save(filename, image, save=True)
 
-        #Serailize the user
+        # Serialize the user
         serialized = UserSerializer(user)
 
-        # the post and get dont exist so send updated user data including new Thumbnail
-        self.group_send(self.username, 'thumbnail', serialized.data)
+        # Send updated user data including new thumbnail
+        self.send_group(self.username, 'thumbnail', serialized.data)
 
-        # Catch/all broadcast to client helpers
+    # Catch/all broadcast to client helpers
+    def send_group(self, group, source, data):
+        response = {
+            'type': 'broadcast_group',
+            'source': source,
+            'data': data
+        }
 
-        def group_send(self, group, source, data):
-            response = {
-                'type': 'broadcast_group',
-                'source': source,
-                'data': data
-            }
-
+        # Send data to the group
         self.channel_layer.group_send(
-            group, response #the response need to be a dict
+            group,
+            response  # The response needs to be a dict
         )
 
-        #calling this response will call the function name broadcast_group
-        def broadcast_group(self, data):
-            '''
-            data :
-                type: 'broadcast_group'
-                source: where it is originated from
-                data: the data that is being send as dict
-            '''
-            data.pop('type')
-            '''
-            return data :
-                source: where it is originated from
-                data: the data that is being send as dict
-            '''
-            self.send(text_data=json.dumps(data)) # send the data back to the websocket
+    # Calling this response will call the function name `broadcast_group`
+    def broadcast_group(self, data):
+        '''
+        event:
+            type: 'broadcast_group'
+            source: where it is originated from
+            data: the data that is being sent as dict
+        '''
+        data.pop('type')  # Remove the type key
 
-        
+        '''
+        Return event:
+            source: where it is originated from
+            data: the data that is being sent as dict
+        '''
+        # Send the data back to the WebSocket
+        self.send(text_data=json.dumps(data))

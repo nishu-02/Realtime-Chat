@@ -30,17 +30,39 @@ function responseRequestConnect(set, get, connection) {
         searchList: searchList
       }))
     }
-
   } else { 
     // if they were the one that had make the connection request
-    // request, add request to the request List 
+    // request, add request to the request List
+    const requestList = [...get().requestList]
+    const requestIndex = requestList.findIndex(
+      request => request.sender.username === connection.sender.username
+    )
+    if (requestIndex === -1) {
+      requestList.unshift(connection)
+      set((state) => ({
+        requestList: requestList
+      }))
+    }
   }
 }
 
-function responseSearch(set, get, data) {
+function responseRequestList(set, get, requestList) {
   set((state) => ({
-    searchList: data
-  }));
+    requestList: requestList
+  }))
+}
+
+function responseSearch(set, get, data) {
+  console.log('Search Response Data:', data); // Log the raw data
+  if (!Array.isArray(data)) {
+    console.error('Search response data is not an array:', data);
+    return;
+  }
+  
+  set((state) => {
+    console.log('Setting searchList to:', data); // Log what we're setting
+    return { searchList: data };
+  });
 }
 
 function responseThumbnail(set, get, data) {
@@ -133,15 +155,20 @@ const useGlobal = create((set, get) => ({
 
     socket.onopen = () => {
       console.log('WebSocket connected');
+      socket.send(JSON.stringify({
+        source: 'request.list'
+      }))
     };
 
     socket.onmessage = (event) => {
       const parsed = JSON.parse(event.data);
       utils.log('onmessage', parsed);
+      console.log('WebSocket received:', parsed);
 
       const responses = {
         'request.connect': responseRequestConnect,
-        'serach': responseSearch,
+        'request.list': responseRequestList,
+        'search': responseSearch,
         'thumbnail': responseThumbnail
       };
 
@@ -180,16 +207,28 @@ const useGlobal = create((set, get) => ({
   searchUsers: (query) => {
     if (query) {
       const socket = get().socket;
-      socket.send(JSON.stringify({
-        source: 'search',
-        query: query,
-      }));
+      try {
+        socket.send(JSON.stringify({
+          source: 'search',
+          query: query,
+        }));
+      } catch (error) {
+        console.error('Error sending search query:', error);
+      }
     } else {
       set({ searchList: null });
     }
   },
 
   requestList: null,
+
+  requestAccept: (username) => {
+    const socket = get().socket;
+    socket.send(JSON.stringify({
+      source: 'request.accept',
+      username: username,
+    }));
+  },
 
   requestConnect: (username) => {
     const socket = get().socket;

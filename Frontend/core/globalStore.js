@@ -15,6 +15,28 @@ const initialState = {
 
 // Socket receive message handling
 
+function responseRequestConnect(set, get, connection) {
+  const user = get().user; // user packet
+  // If i was the one who requested the connection
+  // update the search list row
+  if(user.username === connection.sender.username) {
+    const searchList = [...get().searchList]
+    const searchIndex = searchList.findIndex(
+      request => request.username === connection.receiver.username
+    )
+    if(searchIndex >= 0) {
+      searchList[searchIndex].status = 'pending-them'
+      set((state) => ({
+        searchList: searchList
+      }))
+    }
+
+  } else { 
+    // if they were the one that had make the connection request
+    // request, add request to the request List 
+  }
+}
+
 function responseSearch(set, get, data) {
   set((state) => ({
     searchList: data
@@ -117,12 +139,13 @@ const useGlobal = create((set, get) => ({
       const parsed = JSON.parse(event.data);
       utils.log('onmessage', parsed);
 
-      const response = {
+      const responses = {
+        'request.connect': responseRequestConnect,
         'serach': responseSearch,
         'thumbnail': responseThumbnail
       };
 
-      const resp = response[parsed.source];
+      const resp = responses[parsed.source];
       if (!resp) {
         utils.log('parsed.source ' + parsed.source + ' not found');
         return;
@@ -170,13 +193,11 @@ const useGlobal = create((set, get) => ({
 
   requestConnect: (username) => {
     const socket = get().socket;
-      socket.send(JSON.stringify({
-        source: 'request.connect',
-        username: username,
-      })); 
-    }
+    socket.send(JSON.stringify({
+      source: 'request.connect',
+      username: username,
+    }));
   },
-  
 
   uploadThumbnail: (file) => {
     const socket = get().socket;

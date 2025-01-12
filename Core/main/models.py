@@ -15,7 +15,7 @@ class User(AbstractUser):
         blank=True
     )
 
-class Connection(models.Models):
+class Connection(models.Model):
     sender =  models.ForeignKey(
         User,
         related_name='sent_connections',

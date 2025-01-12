@@ -53,7 +53,7 @@ class ChatConsumer(WebsocketConsumer):
             self.receive_search(data)
 
         # Make friend request
-        if data_source == 'request.connect':
+        elif data_source == 'request.connect':
             self.receive_request_connect(data)
 
         # Thumbnail upload
@@ -81,7 +81,10 @@ class ChatConsumer(WebsocketConsumer):
         # Serailized Connections
         serialized = RequestSerializer(connection)
         # send back to sender
-        self.group_send(connection.sender.username, 'request.coonect', SearchSerializer.data)
+        self.group_send(connection.sender.username, 'request.coonect', serialized.data)
+
+        # send to receiver
+        self.group_send(connection.receiver.username, 'request.connect', serialized.data)
 
     def search_data(self, data):
         query = data.get('query')

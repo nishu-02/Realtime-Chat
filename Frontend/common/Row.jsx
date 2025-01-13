@@ -1,7 +1,6 @@
 import { View } from "react-native"
 import React from "react"
 
-
 function Row({ children }) {
 	return (
 		<View
@@ -19,5 +18,4 @@ function Row({ children }) {
 	)
 }
 
-
-export default Row
+export default Row;

@@ -1,13 +1,13 @@
-import {
-  View,
-  TextInput,
-  SafeAreaView,
-  FlatList,
-  Text,
-  TouchableOpacity,
-} from "react-native";
-import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
+import React, { useEffect, useState } from "react";
+import {
+  FlatList,
+  SafeAreaView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import Empty from "../common/Empty";
 import Thumbnail from "../common/Thumbnail";
@@ -15,18 +15,21 @@ import useGlobal from "../core/globalStore";
 import Row from "../common/Row";
 
 function SearchButton({ user }) {
+  // Add tick if user is already  connected
   if (user.status === "connected") {
     return (
       <FontAwesomeIcon
-        icon="circle-chevron-down"
-        size={28}
+        icon="circle-check"
+        size={30}
         color="#20d080"
-        style={{ marginLeft: 220 }}
+        style={{
+          marginRight: 10,
+        }}
       />
     );
   }
 
-  const requestConnect = useGlobal((state) => state.requestConnect);
+  const requestConnect = useGlobal(state => state.requestConnect);
 
   const data = {};
 
@@ -39,10 +42,12 @@ function SearchButton({ user }) {
     case "pending-them":
       data.text = "Pending";
       data.disabled = true;
+      data.onPress = () => {};
       break;
     case "pending-me":
       data.text = "Accept";
       data.disabled = false;
+      data.onPress = () => {};
       break;
     default:
       break;
@@ -51,8 +56,8 @@ function SearchButton({ user }) {
   return (
     <TouchableOpacity
       style={{
-        backgroundColor: data.disabled ? "#ccc" : "#20d080",
-        paddingHorizontal: 16,
+        backgroundColor: data.disabled ? "#505055" : "#202020",
+        paddingHorizontal: 14,
         height: 36,
         alignItems: "center",
         justifyContent: "center",
@@ -63,7 +68,7 @@ function SearchButton({ user }) {
     >
       <Text
         style={{
-          color: "#fff",
+          color: data.disabled ? "#808080" : "white",
           fontWeight: "bold",
         }}
       >
@@ -112,8 +117,37 @@ function SearchScreen() {
   const searchUsers = useGlobal((state) => state.searchUsers);
 
   useEffect(() => {
-		searchUsers(query)
-	}, [query, searchUsers]) 
+    searchUsers(query);
+  }, [query]);
+
+  /*
+	const searchList = [
+		{
+			thumbnail: null,
+			name: 'Silly Name',
+			username: 'sillyn',
+			status: 'pending-them'
+		},
+		{
+			thumbnail: null,
+			name: 'Silly Something',
+			username: 'sillya',
+			status: 'pending-me'
+		},
+		{
+			thumbnail: null,
+			name: 'Silly Red',
+			username: 'sillyb',
+			status: 'connected'
+		},
+		{
+			thumbnail: null,
+			name: 'Silly Blue',
+			username: 'sillyc',
+			status: 'no-connection'
+		}
+	]
+	*/
 
   return (
     <SafeAreaView style={{ flex: 1 }}>

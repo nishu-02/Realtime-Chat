@@ -5,7 +5,7 @@ from asgiref.sync import async_to_sync
 from django.core.files.base import ContentFile
 from .serializers import UserSerializer,SearchSerializer, RequestSerializer
 from .models import User, Connection
-from django.db.models import Q
+from django.db.models import Q, Exists, OuterRef
 
 
 class ChatConsumer(WebsocketConsumer):
@@ -28,7 +28,8 @@ class ChatConsumer(WebsocketConsumer):
 
     def disconnect(self, close_code):
         async_to_sync(self.channel_layer.group_discard)(
-            self.username,self_channel_name
+            self.username,
+            self.channel_name
         )
 
         
@@ -41,8 +42,10 @@ class ChatConsumer(WebsocketConsumer):
         # python dict
         print('receive', json.dumps(data, indent=2))
 
+        if data_source == 'request.accept':
+            self.receive_request_accept(data)
         # Make friend request
-        if data_source == 'request.connect':
+        elif data_source == 'request.connect':
             self.receive_request_connect(data)
         
         # Get request List
@@ -57,6 +60,37 @@ class ChatConsumer(WebsocketConsumer):
         elif data_source == 'thumbnail':
             # Save the thumbnail to the user's profile
             self.receive_thumbnail(data)
+
+    def receive_request_accept(self, data):
+        username = data.get('username')
+
+        try:
+            # Fetch connection object
+            connection = Connection.objects.get(
+                sender__username=username,
+                receiver=self.scope['user']
+            )   
+        except Connection.DoesNotExist:
+            print("Error: connection doesn't exist")
+            return
+
+        # Update the connection
+        connection.accepted = True
+        connection.save()
+
+        # Serialize the connection object
+        serialized = RequestSerializer(connection)
+
+        # Send accepted request to sender
+        self.send_group(
+            connection.sender.username, 'request.accept', serialized.data
+        )
+
+        # Send accepted request to receiver
+        self.send_group(
+            connection.receiver.username, 'request.accept', serialized.data
+        )
+
 
     def receive_request_connect(self, data):
         username = data.get('username')
@@ -115,11 +149,18 @@ class ChatConsumer(WebsocketConsumer):
             ),
             pending_me=Exists(
                 Connection.objects.filter(
-                    sender=self.scope['user'],
                     receiver=OuterRef('id'),
+                    sender=self.scope['user'],
                     accepted=False
                 ),
-            
+            ),    
+            connected=Exists(
+                Connection.objects.filter(
+                    Q(sender=self.scope['user'], receiver=OuterRef('id')) |
+                    Q(receiver=self.scope['user'], sender=OuterRef('id')),
+                    accepted=True
+                )
+            ) 
         )
 
         # print(f"Found users count: {users.count()}")  # Debug print

@@ -9,6 +9,8 @@ import React from "react";
 import useGlobal from "../core/globalStore";
 import Empty from "../common/Empty";
 import Row from "../common/Row";
+import Thumbnail from "../common/Thumbnail";
+import utils from "../core/utils";
 
 function RequestAccept({ item }) {
   const requestAccept = useGlobal((state) => state.requestAccept);
@@ -57,7 +59,7 @@ function RequestRow({ item }) {
         >
           {message}{" "}
           <Text style={{ color: "#909090", fontSize: 13 }}>
-            {utils.formatTime(item.created)}
+            {/* {utils.formatTime(item.created)} */}
           </Text>
         </Text>
       </View>

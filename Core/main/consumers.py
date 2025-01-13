@@ -1,42 +1,37 @@
-import base64
 import json
+import base64
 from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 from django.core.files.base import ContentFile
+from .serializers import UserSerializer,SearchSerializer, RequestSerializer
 from .models import User, Connection
 from django.db.models import Q
-from .serializers import UserSerializer, SearchSerializer, RequestSerializer
 
 
 class ChatConsumer(WebsocketConsumer):
+
+
+
     def connect(self):
-        # Get the authenticated user from the scope
         user = self.scope['user']
-
-        # If the user is not authenticated, deny the connection
+        print(user,user.is_authenticated)
         if not user.is_authenticated:
-            self.close()
             return
-
-        # Save the username to use as a group name for this user
+        
         self.username = user.username
 
-        # Add the user to a group using their username
-        self.channel_layer.group_add(
-            self.username,  # Group name
-            self.channel_name  # WebSocket channel name
+        async_to_sync(self.channel_layer.group_add)(
+            self.username,self.channel_name
         )
 
-        # Accept the WebSocket connection
         self.accept()
 
     def disconnect(self, close_code):
-        # Remove the user from the group when disconnecting
-        self.channel_layer.group_discard(
-            self.username,  # Group name
-            self.channel_name  
+        async_to_sync(self.channel_layer.group_discard)(
+            self.username,self_channel_name
         )
 
+        
     # Handle Requests
     def receive(self, text_data):
         # Receive message from websocket
@@ -110,6 +105,21 @@ class ChatConsumer(WebsocketConsumer):
         ).exclude(
             # Avoid including the current user in the search results
             username=self.username
+        ).annotate(
+            pending_them=Exists(
+                Connection.objects.filter(
+                    sender=self.scope['user'],
+                    receiver=OuterRef('id'),
+                    accepted=False
+                ),
+            ),
+            pending_me=Exists(
+                Connection.objects.filter(
+                    sender=self.scope['user'],
+                    receiver=OuterRef('id'),
+                    accepted=False
+                ),
+            
         )
 
         # print(f"Found users count: {users.count()}")  # Debug print

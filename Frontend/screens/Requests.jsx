@@ -8,9 +8,10 @@ import {
 import React from "react";
 import useGlobal from "../core/globalStore";
 import Empty from "../common/Empty";
+import Row from "../common/Row";
 
 function RequestAccept({ item }) {
-  const RequestAccept = useGlobal((state) => state.RequestAccept);
+  const requestAccept = useGlobal((state) => state.requestAccept);
 
   return (
     <TouchableOpacity
@@ -22,64 +23,79 @@ function RequestAccept({ item }) {
         alignItems: "center",
         justifyContent: "center",
       }}
-      onPress={() => RequestAccept(item.sender.username)}
+      onPress={() => requestAccept(item.sender.username)}
     >
       <Text style={{ color: "#000", fontSize: 16, fontWeight: "bold" }}></Text>
     </TouchableOpacity>
   );
 }
+
 function RequestRow({ item }) {
   const message = "Requested to connect with you";
   return (
-    <View
-      style={{
-        paddingHorizontal: 20,
-        flexDirection: "row",
-        alignItems: "center",
-        borderBottomWidth: 2,
-        borderBottomColor: "#ccc",
-        height: 106,
-      }}
-    >
-      <Thumbnail url={user.thumbnail} size={56} />
-      <Text
+    <Row>
+      <Thumbnail url={item.sender.thumbnail} size={76} />
+      <View
         style={{
-          fontWeight: "bold",
-          color: "black",
-          marginBottom: 4,
-          paddingLeft: 34,
+          flex: 1,
+          paddingHorizontal: 16,
         }}
       >
-        {item.sender.username}
-      </Text>
-      <Text>
-        {message} <Text>{item}</Text>
-      </Text>
+        <Text
+          style={{
+            fontWeight: "bold",
+            color: "#202020",
+            marginBottom: 4,
+          }}
+        >
+          {item.sender.name}
+        </Text>
+        <Text
+          style={{
+            color: "#606060",
+          }}
+        >
+          {message}{" "}
+          <Text style={{ color: "#909090", fontSize: 13 }}>
+            {utils.formatTime(item.created)}
+          </Text>
+        </Text>
+      </View>
+
       <RequestAccept item={item} />
-    </View>
+    </Row>
   );
 }
 
-export default function RequestsScreen() {
+function RequestsScreen() {
   const requestList = useGlobal((state) => state.requestList);
 
-  if (requestList === null) {
-    return <ActivityIndicator style={{ flex: 1 }} />;
-  }
+  // Show loading indicator
+	if (requestList === null) {
+		return  (
+			<ActivityIndicator style={{ flex: 1 }} />
+		)
+	}
 
-  // showing empty if no requests
-  if (requestList.length === 0) {
-    return <Empty icon="bell" message="No requests yet!" />;
-  }
-
-  // Show request list
+ // Show empty if no requests
+ if (requestList.length === 0) {
   return (
-    <View style={{ flex: 1 }}>
-      <FlatList
-        data={requestList}
-        renderItem={({ item }) => <RequestRow item={item} />}
-        keyExtractor={(item) => item.sender.username}
-      />
-    </View>
-  );
+    <Empty icon='bell' message='No requests' />
+  )
+ }
+  // Show request list
+  // Show request list
+	return (
+		<View style={{ flex: 1 }}>
+			<FlatList
+				data={requestList}
+				renderItem={({ item }) => (
+					<RequestRow item={item} />
+				)}
+				keyExtractor={item => item.sender.username}
+			/>
+		</View>
+	)
 }
+
+export default RequestsScreen;

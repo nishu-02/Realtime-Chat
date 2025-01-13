@@ -1,10 +1,12 @@
-from channels.generic.websocket import WebsocketConsumer
-from django.core.files.base import ContentFile
 import base64
 import json
+from channels.generic.websocket import WebsocketConsumer
+from asgiref.sync import async_to_sync
+from django.core.files.base import ContentFile
+from .models import User, Connection
 from django.db.models import Q
 from .serializers import UserSerializer, SearchSerializer, RequestSerializer
-from .models import User, Connection
+
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
@@ -99,7 +101,7 @@ class ChatConsumer(WebsocketConsumer):
 
     def receive_search(self, data):
         query = data.get('query')
-
+    
         # Get user from query search term
         users = User.objects.filter(
             Q(username__istartswith=query) |
@@ -109,8 +111,13 @@ class ChatConsumer(WebsocketConsumer):
             # Avoid including the current user in the search results
             username=self.username
         )
+
+        # print(f"Found users count: {users.count()}")  # Debug print
+        # print(f"Found users: {list(users.values())}")r  # Debug print
+
         # Serialize results
         serialized = SearchSerializer(users, many=True)
+        print(f"Serialized users: {serialized.data}")
 
         # Send search results back
         self.send_group(self.username, 'search', serialized.data)
@@ -142,9 +149,8 @@ class ChatConsumer(WebsocketConsumer):
         }
 
         # Send data to the group
-        self.channel_layer.group_send(
-            group,
-            response  # The response needs to be a dict
+        async_to_sync(self.channel_layer.group_send)(
+            group,response  # The response needs to be a dict
         )
 
     # Calling this response will call the function name `broadcast_group`

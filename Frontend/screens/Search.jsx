@@ -12,8 +12,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import Empty from "../common/Empty";
 import Thumbnail from "../common/Thumbnail";
 import useGlobal from "../core/globalStore";
+import Row from "../common/Row";
 
-function SearchButton({ user}) {
+function SearchButton({ user }) {
   if (user.status === "connected") {
     return (
       <FontAwesomeIcon
@@ -27,11 +28,7 @@ function SearchButton({ user}) {
 
   const requestConnect = useGlobal((state) => state.requestConnect);
 
-  const data = {
-    text: "",
-    disabled: true,
-    onPress: onPress,
-  };
+  const data = {};
 
   switch (user.status) {
     case "no-connection":
@@ -78,81 +75,77 @@ function SearchButton({ user}) {
 
 function SearchRow({ user }) {
   return (
-    <View
-      style={{
-        paddingHorizontal: 20,
-        flexDirection: "row",
-        alignItems: "center",
-        borderBottomWidth: 2,
-        borderBottomColor: "#ccc",
-        height: 106,
-      }}
-    >
-      <Thumbnail url={user.thumbnail} size={56} />
-      <Text
+    <Row>
+      <Thumbnail url={user.thumbnail} size={76} />
+      <View
         style={{
-          fontWeight: "bold",
-          color: "black",
-          marginBottom: 4,
-          paddingLeft: 34,
+          flex: 1,
+          paddingHorizontal: 16,
         }}
       >
-        {user.username}
-      </Text>
+        <Text
+          style={{
+            fontWeight: "bold",
+            color: "#202020",
+            marginBottom: 4,
+          }}
+        >
+          {user.name}
+        </Text>
+        <Text
+          style={{
+            color: "#606060",
+          }}
+        >
+          {user.username}
+        </Text>
+      </View>
       <SearchButton user={user} />
-    </View>
+    </Row>
   );
 }
 
 function SearchScreen() {
   const [query, setQuery] = useState("");
+
   const searchList = useGlobal((state) => state.searchList);
   const searchUsers = useGlobal((state) => state.searchUsers);
 
   useEffect(() => {
-    console.log('Query changed to:', query);
-  }, [query]);
-
-  useEffect(() => {
-    // Add a small delay to prevent too frequent API calls
-    const timeoutId = setTimeout(() => {
-      searchUsers(query);
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [query]);
+		searchUsers(query)
+	}, [query, searchUsers]) 
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View
         style={{
-          padding: 18,
+          padding: 16,
           borderBottomWidth: 1,
-          borderBottomColor: "beige",
+          borderColor: "#f0f0f0",
         }}
       >
         <View>
           <TextInput
             style={{
-              backgroundColor: "thistle",
-              height: 54,
-              borderRadius: 25,
+              backgroundColor: "#e1e2e4",
+              height: 52,
+              borderRadius: 26,
               padding: 16,
               fontSize: 16,
               paddingLeft: 50,
             }}
             value={query}
             onChangeText={setQuery}
-            placeholder="Search...."
-            placeholderTextColor="teal"
+            placeholder="Search..."
+            placeholderTextColor="#b0b0b0"
           />
           <FontAwesomeIcon
-            icon="search"
-            size={22}
-            color="#000000"
+            icon="magnifying-glass"
+            size={20}
+            color="#505050"
             style={{
               position: "absolute",
-              left: 12,
+              left: 18,
               top: 17,
             }}
           />
@@ -162,22 +155,19 @@ function SearchScreen() {
       {searchList === null ? (
         <Empty
           icon="magnifying-glass"
-          message="Search for folks"
+          message="Search for friends"
           centered={false}
         />
       ) : searchList.length === 0 ? (
         <Empty
           icon="triangle-exclamation"
-          message={`No Users found for ${query}`}
+          message={'No users found for "' + query + '"'}
           centered={false}
         />
       ) : (
         <FlatList
           data={searchList}
-          renderItem={({ item }) => {
-            console.log("Rendering item:", item); // Log each rendered item
-            return <SearchRow user={item} />;
-          }}
+          renderItem={({ item }) => <SearchRow user={item} />}
           keyExtractor={(item) => item.username}
         />
       )}

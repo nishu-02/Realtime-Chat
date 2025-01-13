@@ -16,59 +16,52 @@ const initialState = {
 // Socket receive message handling
 
 function responseRequestConnect(set, get, connection) {
-  const user = get().user; // user packet
-  // If i was the one who requested the connection
-  // update the search list row
-  if(user.username === connection.sender.username) {
-    const searchList = [...get().searchList]
-    const searchIndex = searchList.findIndex(
-      request => request.username === connection.receiver.username
-    )
-    if(searchIndex >= 0) {
-      searchList[searchIndex].status = 'pending-them'
-      set((state) => ({
-        searchList: searchList
-      }))
-    }
-  } else { 
-    // if they were the one that had make the connection request
-    // request, add request to the request List
-    const requestList = [...get().requestList]
-    const requestIndex = requestList.findIndex(
-      request => request.sender.username === connection.sender.username
-    )
-    if (requestIndex === -1) {
-      requestList.unshift(connection)
-      set((state) => ({
-        requestList: requestList
-      }))
-    }
-  }
+	const user = get().user
+	// If i was the one that made the connect request, 
+	// update the search list row
+	if (user.username === connection.sender.username) {
+		const searchList = [...get().searchList]
+		const searchIndex = searchList.findIndex(
+			request => request.username === connection.receiver.username
+		)
+		if (searchIndex >= 0) {
+			searchList[searchIndex].status = 'pending-them'
+			set((state) => ({
+				searchList: searchList
+			}))
+		}
+	// If they were the one  that sent the connect 
+	// request, add request to request list
+	} else {
+		const requestList = [...get().requestList]
+		const requestIndex = requestList.findIndex(
+			request => request.sender.username === connection.sender.username
+		)
+		if (requestIndex === -1) {
+			requestList.unshift(connection)
+			set((state) => ({
+				requestList: requestList
+			}))
+		}
+	}
 }
 
 function responseRequestList(set, get, requestList) {
-  set((state) => ({
-    requestList: requestList
-  }))
+	set((state) => ({
+		requestList: requestList
+	}))
 }
 
 function responseSearch(set, get, data) {
-  console.log('Search Response Data:', data); // Log the raw data
-  if (!Array.isArray(data)) {
-    console.error('Search response data is not an array:', data);
-    return;
-  }
-  
-  set((state) => {
-    console.log('Setting searchList to:', data); // Log what we're setting
-    return { searchList: data };
-  });
+	set((state) => ({
+		searchList: data
+	}))
 }
 
 function responseThumbnail(set, get, data) {
-  set((state) => ({
-    user: data
-  }));
+	set((state) => ({
+		user: data
+	}))
 }
 
 const useGlobal = create((set, get) => ({
@@ -148,7 +141,7 @@ const useGlobal = create((set, get) => ({
       return;
     }
 
-    const socketUrl = `ws://192.168.1.3:5000/chat/?token=${tokens.access}`;
+    const socketUrl = `ws://192.168.1.2:5000/chat/?token=${tokens.access}`;
     console.log('WebSocket URL:', socketUrl);
 
     const socket = new WebSocket(socketUrl);

@@ -3,6 +3,7 @@ import React, { useLayoutEffect, useState } from 'react';
 import Thumbnail from '../common/Thumbnail';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
+import useGlobal from '../core/globalStore';
 
 function MessageHeader({ friend }) {
   return (
@@ -70,6 +71,8 @@ function MessageInput({ message, setMessage, onSend }) {
 function MessageScreen({ navigation, route }) {
   const [message, setMessage] = useState('');
 
+  const messageSend = useGlobal(state => state.messageSend);
+  const connectionId = route.params.id
   const friend = route.params.friend;
 
   // Update the header
@@ -87,6 +90,7 @@ function MessageScreen({ navigation, route }) {
       return
     }
     messageSend(connectionId, message);
+    setMessage('')
   }
 
   return (

@@ -268,6 +268,16 @@ const useGlobal = create((set, get) => ({
 
   friendList : null,
   
+  // Messages
+
+  messageSend: (connectionId, message) => {
+    const socket = get().socket;
+    socket.send(JSON.stringify({
+      source: 'message.send',
+      connectionId: connectionId,
+      message: message
+    }))
+  },
 
   requestList: null,
 

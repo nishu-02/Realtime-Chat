@@ -38,7 +38,6 @@
     "experiments": {
       "typedRoutes": true
     },
-    "devClient": true,
     "extra": {
       "router": {
         "origin": false

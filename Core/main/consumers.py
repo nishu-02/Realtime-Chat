@@ -3,14 +3,12 @@ import base64
 from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 from django.core.files.base import ContentFile
-from .serializers import UserSerializer,SearchSerializer, RequestSerializer, FriendSerializer
+from .serializers import UserSerializer,SearchSerializer, RequestSerializer, FriendSerializer, MessageSerializer
 from .models import User, Connection, Message
 from django.db.models import Q, Exists, OuterRef
 
 
 class ChatConsumer(WebsocketConsumer):
-
-
 
     def connect(self):
         user = self.scope['user']
@@ -45,6 +43,9 @@ class ChatConsumer(WebsocketConsumer):
         if data_source == 'friend.list':
             self.receive_friend_list(data)
 
+        elif data_source == 'message.list':
+            self.receive_message_list(data)
+
         elif data_source == 'message.send':
             self.receive_message_send(data)
 
@@ -77,6 +78,47 @@ class ChatConsumer(WebsocketConsumer):
         serialized = FriendSerializer(connection, context={'user':user}, many=True)
         # send data back to the user
         self.send_group(user.username, 'friend.list', serialized.data)
+
+    def receive_message_list(self, data):
+        user = self.scope['user']
+        connectionId = data.get('connectionId')
+        page = data.get('page')
+        try:
+            connection = Connection.objects.get(id = connectionId)
+        except Connection.DoesNotExist:
+            return
+        
+        # Get Messages
+        messages = Message.objects.filter(
+            connection= connection
+        ).order_by('-created')
+        # serailizing the message
+
+        # the reason is it not serialized only bacuse we have to send to both persons
+        serialized_message = MessageSerializer(
+            messages,
+            context={
+                'user':user
+            },
+            many=True
+        )
+
+        # Get receipient friend
+        recipient = connection.sender
+        if connection.sender == user:
+            recipient = connection.receiver
+
+        # Serialize the friend
+        serailized_friend = UserSerializer(recipient)
+
+        data = {
+            'messages': serialized_message.data,
+            'friend': serailized_friend.data
+        }
+    
+        # send the data back (recipient)
+        self.send_group(user.username, 'message.list' data)
+
 
     def receive_message_send(self, data):
         user = self.scope['user']

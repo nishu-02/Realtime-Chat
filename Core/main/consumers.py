@@ -4,7 +4,7 @@ from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 from django.core.files.base import ContentFile
 from .serializers import UserSerializer,SearchSerializer, RequestSerializer, FriendSerializer
-from .models import User, Connection
+from .models import User, Connection, Message
 from django.db.models import Q, Exists, OuterRef
 
 
@@ -45,6 +45,9 @@ class ChatConsumer(WebsocketConsumer):
         if data_source == 'friend.list':
             self.receive_friend_list(data)
 
+        elif data_source == 'message.send':
+            self.receive_message_send(data)
+
         elif data_source == 'request.accept':
             self.receive_request_accept(data)
         # Make friend request
@@ -74,6 +77,25 @@ class ChatConsumer(WebsocketConsumer):
         serialized = FriendSerializer(connection, context={'user':user}, many=True)
         # send data back to the user
         self.send_group(user.username, 'friend.list', serialized.data)
+
+    def receive_message_send(self, data):
+        user = self.scope['user']
+        connectionId = data.get('connectionId')
+        message_text = data.get('message')
+        try:
+            connection = Connection.objects.get(
+                id = connectionId
+            )
+        except Connection.DoesNotExist:
+            print('error connection dont exist')
+            return
+        
+        message = Message.objects.create(
+            connection = connection,
+            user = user,
+            text=message_text
+        )
+
 
     def receive_request_accept(self, data):
         username = data.get('username')

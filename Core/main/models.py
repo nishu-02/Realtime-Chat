@@ -32,3 +32,21 @@ class Connection(models.Model):
 
 	def __str__(self):
 		return self.sender.username + ' -> ' + self.receiver.username
+      
+
+class Message(models.Model):
+    connection = models.ForeignKey(
+        Connection,
+        related_name='messages',
+        on_delete=models.CASCADE
+	)
+    user =models.ForeignKey(
+        User,
+        related_name='my_messages',
+        on_delete=models.CASCADE
+	)
+    text = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+      
+    def __str__(self):
+	    return self.user.username + ' -> ' + self.text

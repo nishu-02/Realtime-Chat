@@ -3,6 +3,7 @@ import React from "react";
 import Row from "../common/Row";
 import useGlobal from "../core/globalStore";
 import Thumbnail from "../common/Thumbnail";
+import Empty from "../common/Empty";
 
 function formatTime(date) {
   if (date === null) {

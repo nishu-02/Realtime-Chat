@@ -1,11 +1,11 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, FlatList } from "react-native";
 import React from "react";
 import Row from "../common/Row";
 import useGlobal from "../core/globalStore";
 import Thumbnail from "../common/Thumbnail";
 
 function formatTime(date) {
-  if (data === null) {
+  if (date === null) {
     return "-";
   }
   const now = new Date();
@@ -21,20 +21,20 @@ function formatTime(date) {
   }
   // Hours
   if (sec < 60 * 60 * 24) {
-    const hrs = Math.floor(s / (60 * 60));
-    return `s{h}hago`;
+    const hrs = Math.floor(sec / (60 * 60));
+    return `hrs{h}hago`;
   }
   // Days
   if (sec < 60 * 60 * 24 * 7) {
-    const d = Math.floor(s / (60 * 60));
-    return `s{d}hago`;
+    const d = Math.floor(sec / (60 * 60));
+    return `d{d}hago`;
   }
   return "*";
 }
 
-function friendRow({navigation, item}) {
+function FriendRow({navigation, item}) {
   return (
-    <TouchableOpacity onPress={() => {navigation.navigate('Mesage', item)}}>
+    <TouchableOpacity onPress={() => {navigation.navigate('Message', item)}}>
       <Row>
         <Thumbnail url={item.friend.thumbnail} size={76} />
         <View
@@ -68,7 +68,7 @@ function friendRow({navigation, item}) {
   );
 }
 
-export default function FriendsScreen(navigation) {
+export default function FriendsScreen({navigation}) {
   const friendList = useGlobal((state) => state.friendList);
 
   // Show loading indicator
@@ -89,7 +89,7 @@ export default function FriendsScreen(navigation) {
       <FlatList
         data={friendList}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <friendRow navigation={navigation} item={item} />}
+        renderItem={({ item }) => <FriendRow navigation={navigation} item={item} />}
       />
     </View>
   );

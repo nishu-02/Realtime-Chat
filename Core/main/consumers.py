@@ -68,7 +68,7 @@ class ChatConsumer(WebsocketConsumer):
         user = self.scope['user']
         # Get connections for the user
         connection = Connection.objects.filter(
-            Q(sender=user) | Q(reciver=user),
+            Q(sender=user) | Q(receiver=user),
             accepted=True
         )
         serialized = FriendSerializer(connection, context={'user':user}, many=True)

@@ -82,8 +82,8 @@ class RequestSerializer(serializers.ModelSerializer):
 		]
 
 class FriendSerializer(serializers.ModelSerializer):
-    friend = serializers.SerializersMethodField()
-    preview = serializers.SerializersMethodField()
+    friend = serializers.SerializerMethodField()
+    preview = serializers.SerializerMethodField()
 
     class Meta:
         model = Connection

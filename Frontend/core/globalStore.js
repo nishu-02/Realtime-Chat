@@ -15,6 +15,12 @@ const initialState = {
 
 // Socket receive message handling
 
+function responseFriendList(set, get, friendList) {
+  set((state) =>({
+    friendList: friendList
+  }))
+}
+
 function responseRequestAccept(set, get, connection) {  
   const user = get().user
   // If I was the one the accepted the request, remove the request from the list
@@ -195,6 +201,9 @@ const useGlobal = create((set, get) => ({
       socket.send(JSON.stringify({
         source: 'request.list'
       }))
+      socket.send(JSON.stringify({
+        source: 'friend.list'
+      }))
     };
 
     socket.onmessage = (event) => {
@@ -203,6 +212,7 @@ const useGlobal = create((set, get) => ({
       console.log('WebSocket received:', parsed);
 
       const responses = {
+        'friend.list': responseFriendList,
         'requestAccept': responseRequestAccept,
         'request.connect': responseRequestConnect,
         'request.list': responseRequestList,
@@ -255,6 +265,9 @@ const useGlobal = create((set, get) => ({
 			}))
 		}
 	},
+
+  friendList : null,
+  
 
   requestList: null,
 

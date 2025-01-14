@@ -80,3 +80,29 @@ class RequestSerializer(serializers.ModelSerializer):
 			'receiver',
 			'created'
 		]
+
+class FriendSerializer(serializers.ModelSerializer):
+    friend = serializers.SerializersMethodField()
+    preview = serializers.SerializersMethodField()
+
+    class Meta:
+        model = Connection
+        fields = [
+            'id',
+            'friend',
+            'preview',
+            'updated'
+        ]
+
+    def get_friend(self, obj):
+        # IF i am the sender
+        if self.context['user'] == obj.sender:
+            return UserSerializer(obj.receiver).data
+        # IF i am the receiver
+        elif self.context['user'] == obj.receiver:
+            return UserSerializer(obj.sender).data
+        else:
+            print('Error')
+
+    def get_preview(self, data):
+        return 'New Connection'

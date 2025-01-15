@@ -1,4 +1,4 @@
-import { TouchableOpacity, View, OnrPress } from "react-native";
+import { TouchableOpacity, View} from "react-native";
 import React, { useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 

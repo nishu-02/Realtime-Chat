@@ -1,19 +1,21 @@
-import utils from '../core/utils.js';
-import { Image } from "react-native";
+import { Image, View } from "react-native";
 import React from 'react';
-
 import useGlobal from '../core/globalStore';
 
-function Thumbnail({ url, size }) {
+function Thumbnail({ url, size, style }) {
   const user = useGlobal((state) => state.user);
-
-  const thumbnailSource = utils.thumbnail(url || user.thumbnail);
+  const baseUrl = 'http://192.168.1.4:5000';
+  
+  const thumbnailUrl = url || user?.thumbnail;
+  const fullUrl = thumbnailUrl?.startsWith('http') ? thumbnailUrl : `${baseUrl}${thumbnailUrl}`;
 
   return (
-    <Image 
-      source={thumbnailSource} 
-      style={{ width: size, height: size, borderRadius: size / 2 }}
-    />
+    <View style={[{ width: size, height: size, backgroundColor: '#f3f4f6' }, style]}>
+      <Image 
+        source={{ uri: fullUrl }} 
+        style={{ width: size, height: size, borderRadius: size / 2 }}
+      />
+    </View>
   );
 }
 

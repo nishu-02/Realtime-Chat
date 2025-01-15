@@ -1,9 +1,9 @@
-import { View, Text, Image, TouchableOpacity} from 'react-native';
+import { View, Text, TouchableOpacity} from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { launchImageLibrary } from 'react-native-image-picker'
+
 import useGlobal from '../core/globalStore';
 import React from 'react';
-import utils from '../core/utils';
 import Thumbnail from '../common/Thumbnail'
 
 function ProfileImage() {

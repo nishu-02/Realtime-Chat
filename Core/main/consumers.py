@@ -117,7 +117,7 @@ class ChatConsumer(WebsocketConsumer):
         }
     
         # send the data back (recipient)
-        self.send_group(user.username, 'message.list' data)
+        self.send_group(user.username, 'message.list', data)
 
 
     def receive_message_send(self, data):

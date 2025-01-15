@@ -22,10 +22,10 @@ function responseFriendList(set, get, friendList) {
 }
 
 
-function responseMessageist(set, get, data) {
-  set((state) =>({
-    messagesList: [...get().messagesList], ...data.messages]
-    }))
+function responseMessageList(set, get, data) {
+  set((state) => ({
+    messagesList: [...get().messagesList, ...data.messages],
+  }));
 }
 function responseRequestAccept(set, get, connection) {  
   const user = get().user

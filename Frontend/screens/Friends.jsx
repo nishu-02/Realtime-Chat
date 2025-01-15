@@ -1,96 +1,113 @@
 import { View, Text, TouchableOpacity, ActivityIndicator, FlatList } from "react-native";
 import React from "react";
-import Row from "../common/Row";
 import useGlobal from "../core/globalStore";
 import Thumbnail from "../common/Thumbnail";
 import Empty from "../common/Empty";
 
-function formatTime(date) {
-  if (date === null) {
-    return "-";
+const colors = {
+  primary: '#4F46E5',
+  background: '#F3F4F6',
+  card: '#FFFFFF',
+  text: {
+    primary: '#111827',
+    secondary: '#4B5563',
+    tertiary: '#6B7280'
+  },
+  shadow: {
+    color: '#000000',
+    opacity: 0.08
   }
+};
+
+function formatTime(date) {
+  if (!date) return "-";
   const now = new Date();
   const sec = Math.abs(now - new Date(date)) / 1000;
-  // seconds
-  if (sec < 60) {
-    return "now";
-  }
-  // Minutes
-  if (sec < 60 * 60) {
-    const minutes = Math.floor(sec / 60);
-    return `5{minutes}mago`;
-  }
-  // Hours
-  if (sec < 60 * 60 * 24) {
-    const hrs = Math.floor(sec / (60 * 60));
-    return `hrs{h}hago`;
-  }
-  // Days
-  if (sec < 60 * 60 * 24 * 7) {
-    const d = Math.floor(sec / (60 * 60));
-    return `d{d}hago`;
-  }
-  return "*";
+
+  if (sec < 60) return "Just now";
+  if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
+  if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
+  if (sec < 604800) return `${Math.floor(sec / 86400)}d ago`;
+  return "-";
 }
 
-function FriendRow({navigation, item}) {
+function FriendRow({ navigation, item }) {
+  const { friend, preview, updated } = item;
+
   return (
-    <TouchableOpacity onPress={() => {navigation.navigate('Message', item)}}>
-      <Row>
-        <Thumbnail url={item.friend.thumbnail} size={76} />
-        <View
-          style={{
-            flex: 1,
-            paddingHorizontal: 16,
+    <TouchableOpacity 
+      onPress={() => navigation.navigate('Message', item)}
+      style={{
+        marginBottom: 12,
+        marginHorizontal: 16,
+        borderRadius: 12,
+        backgroundColor: colors.card,
+        shadowColor: colors.shadow.color,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: colors.shadow.opacity,
+        shadowRadius: 4,
+        elevation: 2,
+      }}
+    >
+      <View style={{ flexDirection: 'row', padding: 14, alignItems: 'center' }}>
+        <Thumbnail 
+          url={friend.thumbnail}
+          size={48} 
+          style={{ 
+            borderRadius: 24,
+            backgroundColor: colors.background
           }}
-        >
-          <Text
-            style={{
-              fontWeight: "bold",
-              color: "#202020",
-              marginBottom: 4,
-            }}
-          >
-            {item.friend.name}
+        />
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text.primary }}>
+            {friend.name}
           </Text>
-          <Text
-            style={{
-              color: "#606060",
+          <Text 
+            numberOfLines={1}
+            style={{ 
+              fontSize: 14,
+              color: colors.text.secondary,
+              marginTop: 2
             }}
           >
-            {item.preview}{" "}
-            <Text style={{ color: "#909090", fontSize: 13 }}>
-              {formatTime(item.updated)}
-            </Text>
+            {preview}
+          </Text>
+          <Text style={{ fontSize: 12, color: colors.text.tertiary, marginTop: 2 }}>
+            {formatTime(updated)}
           </Text>
         </View>
-      </Row>
+      </View>
     </TouchableOpacity>
   );
 }
 
-export default function FriendsScreen({navigation}) {
+export default function FriendsScreen({ navigation }) {
   const friendList = useGlobal((state) => state.friendList);
 
-  // Show loading indicator
   if (friendList === null) {
-    return <ActivityIndicator style={{ flex: 1 }} />;
-  }
-
-  // Show empty if no requests
-  if (friendList.length === 0) {
     return (
-      <Empty icon="inbox" message="No Friends Yet! search to find friends" />
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
     );
   }
 
-  // Show request list
+  if (friendList.length === 0) {
+    return <Empty icon="inbox" message="No Friends Yet! Search to find friends" />;
+  }
+
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <FlatList
         data={friendList}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <FriendRow navigation={navigation} item={item} />}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <FriendRow navigation={navigation} item={item} />
+        )}
+        contentContainerStyle={{ 
+          paddingVertical: 12
+        }}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );

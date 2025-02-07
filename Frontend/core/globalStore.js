@@ -27,6 +27,14 @@ function responseMessageList(set, get, data) {
   }));
 }
 
+function responseMessageSend(set, get, data) {
+  
+  const messageList = [...data.message, ...get().messagesList]
+  set((state) => ({
+    messagesList:messageList
+  }));
+}
+
 function responseRequestAccept(set, get, connection) {  
   const user = get().user
   // If I was the one the accepted the request, remove the request from the list
@@ -220,6 +228,7 @@ const useGlobal = create((set, get) => ({
       const responses = {
         'friend.list': responseFriendList,
         'message.list': responseMessageList,
+        'message.send': responseMessageSend,
         'requestAccept': responseRequestAccept,
         'request.connect': responseRequestConnect,
         'request.list': responseRequestList,

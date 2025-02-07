@@ -21,12 +21,12 @@ function responseFriendList(set, get, friendList) {
   }))
 }
 
-
 function responseMessageList(set, get, data) {
   set((state) => ({
     messagesList: [...get().messagesList, ...data.messages],
   }));
 }
+
 function responseRequestAccept(set, get, connection) {  
   const user = get().user
   // If I was the one the accepted the request, remove the request from the list

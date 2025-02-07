@@ -98,7 +98,7 @@ function SignInScreen() {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.content}>
           <Title text="Realtime Chat" color="Black" />
-
+  
           <Input
             title="Username"
             value={username}
@@ -112,14 +112,15 @@ function SignInScreen() {
             error={passwordError}
             setValue={setPassword}
             setError={setPasswordError}
+            secureTextEntry={true}
           />
-
+  
           <Button title="Sign In" onPress={onSignIn} />
-
+  
           <Text>
             Don't have an account yet!
             <Text
-              style={{ color: "black" }}
+              style={{ color: "blue", marginLeft:12 }}
               onPress={() => navigation.navigate("SignUp")}
             >
               Sign up

@@ -1,7 +1,7 @@
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import React from 'react';
 
-function Input({ title, value, error, setValue, setError }) {
+function Input({ title, value, error, setValue, setError, secureTextEntry }) {
   return (
     <View>
       <Text style={styles.item}>
@@ -17,6 +17,7 @@ function Input({ title, value, error, setValue, setError }) {
             setError('');
           }
         }}
+        secureTextEntry={secureTextEntry} // Secure text entry logic
       />
     </View>
   );

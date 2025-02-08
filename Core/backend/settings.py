@@ -44,8 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles', 
     'rest_framework',
-    'rest_framework_simplejwt', pip freeze | grep django_channels_jwt_auth_middleware
-
+    'rest_framework_simplejwt',
     'corsheaders',
     'channels',
 ]

@@ -50,8 +50,13 @@ class ChatConsumer(WebsocketConsumer):
         elif data_source == 'message.send':
             self.receive_message_send(data)
 
+        # User is typing
+        elif data_source == 'message.type':
+            self.receive_message_type(data)
+
         elif data_source == 'request.accept':
             self.receive_request_accept(data)
+
         # Make friend request
         elif data_source == 'request.connect':
             self.receive_request_connect(data)
@@ -180,6 +185,15 @@ class ChatConsumer(WebsocketConsumer):
         }
         self.send_group(recipient.username, 'message.send', receiver_data)
 
+
+    def receive_message_type(self, data):
+        user = self.scope['user']
+        recipient_username = data.get('username')
+
+        data = {
+            'username': user.username
+        }
+        self.send_group(recipient_username, 'message.type', data)
 
     def receive_request_accept(self, data):
         username = data.get('username')

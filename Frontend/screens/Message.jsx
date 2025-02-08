@@ -1,143 +1,340 @@
-import { View, Text, SafeAreaView, TextInput, TouchableOpacity, FlatList } from 'react-native';
-import React, { useEffect, useLayoutEffect, useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
-import useGlobal from '../core/globalStore';
-import Thumbnail from '../common/Thumbnail';
-
-const colors = {
-  bg: '#FFFFFF',
-  inputBg: '#beige',
-  text: '#1A1A1A',
-  accent: '#7C3AED',
-  subtle: '#E5E7EB'
-};
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { Animated, Easing, FlatList, InputAccessoryView, Keyboard, Platform, SafeAreaView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native"
+import Thumbnail from "../common/Thumbnail"
+import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome"
+import useGlobal from "../core/globalStore"
 
 function MessageHeader({ friend }) {
-  return (
-    <View style={{
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 16,
-    }}>
-      <Thumbnail url={friend?.thumbnail} size={38} />
-      <Text style={{ marginLeft: 12, fontSize: 16, color: colors.text }}>
-        {friend?.name || 'Chat'}
-      </Text>
-    </View>
-  );
+	return  (
+		<View
+			style={{
+				flex: 1, 
+				flexDirection: 'row', 
+				alignItems: 'center'
+			}}
+		>
+			<Thumbnail
+				url={friend.thumbnail}
+				size={30}
+			/>
+			<Text
+				style={{
+					color: '#202020',
+					marginLeft: 10,
+					fontSize: 18,
+					fontWeight: 'bold'
+				}}
+			>
+				{friend.name}
+			</Text>
+		</View>
+	)
 }
 
-function MessageBox({ message, friend }) {
-  const isMe = message.is_me;
-  return (
-    <View style={{
-      alignItems: isMe ? 'flex-end' : 'flex-start',
-      paddingHorizontal: 16,
-      marginVertical: 4
-    }}>
-      <View style={{
-        backgroundColor: isMe ? colors.accent : colors.inputBg,
-        borderRadius: 20,
-        maxWidth: '80%',
-        minWidth: 60,
-        padding: 12,
-        paddingHorizontal: 16
-      }}>
-        <Text style={{
-          color: isMe ? '#FFF' : colors.text,
-          fontSize: 15,
-          lineHeight: 22
-        }}>
-          {message.text}
-        </Text>
-      </View>
-    </View>
-  );
+function MessageBubbleMe({ text }) {
+	return (
+		<View
+			style={{
+				flexDirection: 'row',
+				padding: 4,
+				paddingRight: 12
+			}}
+		>
+			<View style={{ flex: 1}} />
+			<View
+				style={{
+					backgroundColor: '#303040',
+					borderRadius: 21,
+					maxWidth: '75%',
+					paddingHorizontal: 16,
+					paddingVertical: 12,
+					justifyContent: 'center',
+					marginRight: 8,
+					minHeight: 42
+				}}
+			>
+				<Text
+					style={{
+						color: 'white',
+						fontSize: 16,
+						lineHeight: 18
+					}}
+				>
+					{text}
+				</Text>
+			</View>
+			
+		</View>
+	)
+}
+
+
+function MessageTypingAnimation({ offset }) {
+	const y = useRef(new Animated.Value(0)).current
+
+	useEffect(() => {
+		const total = 1000
+		const bump = 200
+
+		const animation = Animated.loop(
+			Animated.sequence([
+				Animated.delay(bump * offset),
+				Animated.timing(y, {
+					toValue: 1,
+					duration: bump,
+					easing: Easing.linear,
+					useNativeDriver: true
+				}),
+				Animated.timing(y, {
+					toValue: 0,
+					duration: bump,
+					easing: Easing.linear,
+					useNativeDriver: true
+				}),
+				Animated.delay(total - bump * 2 - bump * offset),
+			])
+		)
+		animation.start()
+		return () => {
+			animation.stop()
+		}
+	}, [])
+
+	const translateY = y.interpolate({
+		inputRange: [0, 1],
+		outputRange: [0, -8]
+	})
+
+	return (
+		<Animated.View
+			style={{
+				width: 8,
+				height: 8,
+				marginHorizontal: 1.5,
+				borderRadius: 4,
+				backgroundColor: '#606060',
+				transform: [{ translateY }]
+			}}
+		/>
+	)
+}
+
+function MessageBubbleFriend({ text='', friend, typing=false }) {
+	return (
+		<View
+			style={{
+				flexDirection: 'row',
+				padding: 4,
+				paddingLeft: 16
+			}}
+		>
+			<Thumbnail
+				url={friend.thumbnail}
+				size={42}
+			/>
+			<View
+				style={{
+					backgroundColor: '#d0d2db',
+					borderRadius: 21,
+					maxWidth: '75%',
+					paddingHorizontal: 16,
+					paddingVertical: 12,
+					justifyContent: 'center',
+					marginLeft: 8,
+					minHeight: 42
+				}}
+			>
+				{typing ? (
+					<View style={{ flexDirection: 'row' }}>
+						<MessageTypingAnimation offset={0} />
+						<MessageTypingAnimation offset={1} />
+						<MessageTypingAnimation offset={2} />
+					</View>
+				) : (
+					<Text
+						style={{
+							color: '#202020',
+							fontSize: 16,
+							lineHeight: 18
+						}}
+					>
+						{text}
+					</Text>
+				)}
+				
+			</View>
+			<View style={{ flex: 1}} />
+		</View>
+	)
+}
+
+
+function MessageBubble({ index, message, friend }) {
+	const [showTyping, setShowTyping] = useState(false)
+
+	const messagesTyping = useGlobal(state => state.messagesTyping)
+
+	useEffect(() => {
+		if (index !== 0) return
+		if (messagesTyping === null) {
+			setShowTyping(false)
+			return
+		}
+		setShowTyping(true)
+		const check = setInterval(() => {
+			const now = new Date()
+			const ms = now - messagesTyping
+			if (ms > 10000) {
+				setShowTyping(false)
+			}
+		}, 1000)
+		return () => clearInterval(check)
+	}, [messagesTyping])
+
+
+	if (index === 0) {
+		if (showTyping) {
+			return <MessageBubbleFriend friend={friend} typing={true} />
+		}
+		return
+	}
+
+	return message.is_me ? (
+		<MessageBubbleMe text={message.text} />
+	) : (
+		<MessageBubbleFriend text={message.text} friend={friend} />
+	)
 }
 
 function MessageInput({ message, setMessage, onSend }) {
-  return (
-    <View style={{
-      padding: 16,
-      paddingTop: 12,
-      flexDirection: 'row',
-      borderTopColor: colors.subtle,
-      borderTopWidth: 1
-    }}>
-      <TextInput
-        value={message}
-        onChangeText={setMessage}
-        placeholder="Message"
-        style={{
-          flex: 1,
-          height: 44,
-          backgroundColor: colors.inputBg,
-          borderRadius: 22,
-          paddingHorizontal: 20,
-          fontSize: 16,
-          marginRight: 12
-        }}
-      />
-      <TouchableOpacity 
-        onPress={onSend}
-        style={{
-          width: 44,
-          height: 44,
-          backgroundColor: colors.accent,
-          borderRadius: 22,
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-      >
-        <FontAwesomeIcon icon={faPaperPlane} size={18} color="#FFF" />
-      </TouchableOpacity>
-    </View>
-  );
+	return (
+		<View
+			style={{
+				paddingHorizontal: 10,
+				paddingBottom: 10,
+				backgroundColor: 'white',
+				flexDirection: 'row',
+				alignItems: 'center'
+			}}
+		>
+			<TextInput
+				placeholder="Message..."
+				placeholderTextColor='#909090'
+				value={message}
+				onChangeText={setMessage}
+				style={{
+					flex: 1,
+					paddingHorizontal: 18,
+					borderWidth: 1,
+					borderRadius: 25,
+					borderColor: '#d0d0d0',
+					backgroundColor: 'white',
+					height: 50
+				}}
+			/>
+			<TouchableOpacity onPress={onSend}>
+				<FontAwesomeIcon
+					icon='paper-plane'
+					size={22}
+					color={'#303040'}
+					style={{
+						marginHorizontal: 12
+					}}
+				/>
+			</TouchableOpacity>
+		</View>
+	)
 }
 
-function MessageScreen({ navigation, route }) {
-  const [message, setMessage] = useState('');
-  const messagesList = useGlobal(state => state.messagesList);
-  const messageList = useGlobal(state => state.messageList);
-  const messageSend = useGlobal(state => state.messageSend);
-  const { id: connectionId, friend } = route.params;
+function MessagesScreen({ navigation, route }) {
+	const [message, setMessage] = useState('')
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTitle: () => <MessageHeader friend={friend} />,
-      headerShadowVisible: false
-    });
-  }, [navigation, friend]);
+	const messagesList = useGlobal(state => state.messagesList)
+	const messagesNext = useGlobal(state => state.messagesNext)
 
-  useEffect(() => {
-    messageList(connectionId);
-  }, []);
+	const messageList = useGlobal(state => state.messageList)
+	const messageSend = useGlobal(state => state.messageSend)
+	const messageType = useGlobal(state => state.messageType)
 
-  function onSend() {
-    if (!message.trim()) return;
-    messageSend(connectionId, message);
-    setMessage('');
-  }
+	const connectionId = route.params.id
+	const friend = route.params.friend
 
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <FlatList
-        data={messagesList}
-        inverted
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <MessageBox message={item} friend={friend} />
-        )}
-        contentContainerStyle={{ paddingVertical: 10 }}
-      />
-      <MessageInput
-        message={message}
-        setMessage={setMessage}
-        onSend={onSend}
-      />
-    </SafeAreaView>
-  );
+	// Update the header 
+	useLayoutEffect(() => {
+		navigation.setOptions({
+			headerTitle: () => (
+				<MessageHeader friend={friend} />
+			)
+		})
+	}, [])
+
+	useEffect(() => {
+		messageList(connectionId)
+	}, [])
+
+	function onSend() {
+		const cleaned = message.replace(/\s+/g, ' ').trim()
+		if (cleaned.length === 0) return
+		messageSend(connectionId, cleaned)
+		setMessage('')
+	}
+
+	function onType(value) {
+		setMessage(value)
+		messageType(friend.username)
+	}
+
+	return (
+		<SafeAreaView style={{ flex: 1 }}>
+			
+			<View
+				style={{
+					flex: 1,
+					marginBottom: Platform.OS === 'ios' ? 60 : 0
+				}}
+			>
+				<FlatList
+					automaticallyAdjustKeyboardInsets={true}
+					contentContainerStyle={{
+						paddingTop: 30
+					}}
+					data={[{id: -1}, ...messagesList]}
+					inverted={true}
+					keyExtractor={item => item.id}
+					onEndReached={() => {
+						if (messagesNext) {
+							messageList(connectionId, messagesNext)
+						}
+					}}
+					renderItem={({ item, index}) => (
+						<MessageBubble
+							index={index}
+							message={item}
+							friend={friend}
+						/>
+					)}
+				/>
+			</View>
+			
+
+			{Platform.OS === 'ios' ? (
+				<InputAccessoryView>
+					<MessageInput 
+						message={message}
+						setMessage={onType}
+						onSend={onSend}
+					/>
+				</InputAccessoryView>
+			) : (
+				<MessageInput 
+					message={message}
+					setMessage={onType}
+					onSend={onSend}
+				/>
+			)}
+			
+		</SafeAreaView>
+	)
 }
 
-export default MessageScreen;
+export default MessagesScreen

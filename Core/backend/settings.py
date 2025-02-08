@@ -29,7 +29,6 @@ ALLOWED_HOSTS = ['*' , 'localhost', 'https://realtime-chat-ye3n.onrender.com']
 
 CORS_ALLOWED_ORIGINS = [
     "https://expo.dev",  # Expo hosting
-    "https://expo.dev/0264hendricks/Frontend",  # Your app link
     "http://localhost:8081",  # Local development
     "http://127.0.0.1:5000",
 ]

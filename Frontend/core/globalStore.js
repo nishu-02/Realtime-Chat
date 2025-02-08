@@ -16,7 +16,7 @@ const initialState = {
 // Socket receive message handling
 
 function responseFriendList(set, get, friendList) {
-  set((state) =>({
+  set((state) => ({
     friendList: friendList
   }))
 }
@@ -24,27 +24,59 @@ function responseFriendList(set, get, friendList) {
 function responseMessageList(set, get, data) {
   set((state) => ({
     messagesList: [...get().messagesList, ...data.messages],
+    messagesUsername: data.friend.username
   }));
 }
 
 function responseMessageSend(set, get, data) {
-  
-  const messageList = [...data.message, ...get().messagesList]
+  const username = data.friend.username;
+
+  // Create a new friendList array
+  const friendList = [...get().friendList];
+  const friendIndex = friendList.findIndex(
+    item => item.friend.username === username
+  );
+
+  if (friendIndex >= 0) {
+    // Create a new item object instead of modifying the existing one
+    const oldItem = friendList[friendIndex];
+    const newItem = {
+      ...oldItem,
+      preview: data.message.text,
+      updated: data.message.created
+    };
+    
+    // Remove old item and insert new item
+    friendList.splice(friendIndex, 1);
+    friendList.unshift(newItem);
+    
+    set((state) => ({
+      friendList: friendList
+    }));
+  }
+
+  // If the message data doesn't belong to this friend, don't update the message list
+  if (username !== get().messagesUsername) {
+    return;
+  }
+
+  // Create new message list with the new message
+  const messageList = [data.message, ...get().messagesList];
   set((state) => ({
-    messagesList:messageList
+    messagesList: messageList
   }));
 }
 
-function responseRequestAccept(set, get, connection) {  
+function responseRequestAccept(set, get, connection) {
   const user = get().user
   // If I was the one the accepted the request, remove the request from the list
 
-  if(user.username === connection.receiver.username) {
+  if (user.username === connection.receiver.username) {
     const requestList = [...get().requestList]
     const requestIndex = requestList.findIndex(
       request => request.id === connection.id
     )
-    if(requestIndex >= 0) {
+    if (requestIndex >= 0) {
       requestList.splice(requestIndex, 1)
       set((state) => ({
         requestList: requestList
@@ -53,25 +85,25 @@ function responseRequestAccept(set, get, connection) {
   }
   // If the corresponding user is  contained within the searcLsit for the acceptor, update the state of the searchList item
   const sl = get().searchList
-  if( sl === null) {
+  if (sl === null) {
     return
   }
   const searchList = [...sl]
-  
+
   let searchIndex = -1;
   // if the user is accepted
-  if( user.usersname === connection.receiver.username) {
+  if (user.username === connection.receiver.username) {
     searchIndex = searchList.findIndex(
       user => user.username === connection.receiver.username
     )
-  } else{
+  } else {
     // if the other user accepted
     searchIndex = searchList.findIndex(
       user => user.username === connection.receiver.username
     )
   }
 
-  if( searchIndex >= 0 ) {
+  if (searchIndex >= 0) {
     searchList[searchIndex].status = 'connected'
     set((state) => ({
       searchList: searchList
@@ -80,52 +112,52 @@ function responseRequestAccept(set, get, connection) {
 }
 
 function responseRequestConnect(set, get, connection) {
-	const user = get().user
-	// If i was the one that made the connect request, 
-	// update the search list row
-	if (user.username === connection.sender.username) {
-		const searchList = [...get().searchList]
-		const searchIndex = searchList.findIndex(
-			request => request.username === connection.receiver.username
-		)
-		if (searchIndex >= 0) {
-			searchList[searchIndex].status = 'pending-them'
-			set((state) => ({
-				searchList: searchList
-			}))
-		}
-	// If they were the one  that sent the connect 
-	// request, add request to request list
-	} else {
-		const requestList = [...get().requestList]
-		const requestIndex = requestList.findIndex(
-			request => request.sender.username === connection.sender.username
-		)
-		if (requestIndex === -1) {
-			requestList.unshift(connection)
-			set((state) => ({
-				requestList: requestList
-			}))
-		}
-	}
+  const user = get().user
+  // If i was the one that made the connect request, 
+  // update the search list row
+  if (user.username === connection.sender.username) {
+    const searchList = [...get().searchList]
+    const searchIndex = searchList.findIndex(
+      request => request.username === connection.receiver.username
+    )
+    if (searchIndex >= 0) {
+      searchList[searchIndex].status = 'pending-them'
+      set((state) => ({
+        searchList: searchList
+      }))
+    }
+    // If they were the one  that sent the connect 
+    // request, add request to request list
+  } else {
+    const requestList = [...get().requestList]
+    const requestIndex = requestList.findIndex(
+      request => request.sender.username === connection.sender.username
+    )
+    if (requestIndex === -1) {
+      requestList.unshift(connection)
+      set((state) => ({
+        requestList: requestList
+      }))
+    }
+  }
 }
 
 function responseRequestList(set, get, requestList) {
-	set((state) => ({
-		requestList: requestList
-	}))
+  set((state) => ({
+    requestList: requestList
+  }))
 }
 
 function responseSearch(set, get, data) {
-	set((state) => ({
-		searchList: data
-	}))
+  set((state) => ({
+    searchList: data
+  }))
 }
 
 function responseThumbnail(set, get, data) {
-	set((state) => ({
-		user: data
-	}))
+  set((state) => ({
+    user: data
+  }))
 }
 
 const useGlobal = create((set, get) => ({
@@ -205,7 +237,7 @@ const useGlobal = create((set, get) => ({
       return;
     }
 
-    const socketUrl = `ws://192.168.1.4:5000/chat/?token=${tokens.access}`;
+    const socketUrl = `ws://192.168.1.6:5000/chat/?token=${tokens.access}`;
     console.log('WebSocket URL:', socketUrl);
 
     const socket = new WebSocket(socketUrl);
@@ -269,37 +301,39 @@ const useGlobal = create((set, get) => ({
   },
 
   searchUsers: (query) => {
-		if (query) {
-			const socket = get().socket
-			socket.send(JSON.stringify({
-				source: 'search',
-				query: query
-			}))
-		} else {
-			set((state) => ({
-				searchList: null
-			}))
-		}
-	},
+    if (query) {
+      const socket = get().socket
+      socket.send(JSON.stringify({
+        source: 'search',
+        query: query
+      }))
+    } else {
+      set((state) => ({
+        searchList: null
+      }))
+    }
+  },
 
-  friendList : null,
-  
+  friendList: null,
+
   // Messages
 
   messagesList: [],
+  messagesUsername: null,
 
 
-  messageList: (connectionId, page=0) => {
+  messageList: (connectionId, page = 0) => {
     if (page === 0) {
       set((state) => ({
-        messagesList: []
+        messagesList: [],
+        messageUsername: null
       }))
     }
     const socket = get().socket;
     socket.send(JSON.stringify({
       source: 'message.list',
       connectionId: connectionId,
-      page:page
+      page: page
     }))
   },
 

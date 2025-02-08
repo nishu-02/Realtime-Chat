@@ -1,6 +1,6 @@
 import Thumbnail from '../assets/thumbnail.png';
 
-const ADDRESS = '192.168.1.3:5000';
+const ADDRESS = '192.168.1.6:5000';
 
 function log(...args) {
   args.forEach((arg) => {

@@ -124,52 +124,48 @@ class ChatConsumer(WebsocketConsumer):
         user = self.scope['user']
         connectionId = data.get('connectionId')
         message_text = data.get('message')
+    
         try:
-            connection = Connection.objects.get(
-                id = connectionId
-            )
+            connection = Connection.objects.get(id=connectionId)
         except Connection.DoesNotExist:
-            print('error connection dont exist')
+            print('error connection does not exist')
             return
-        
+    
+    # Create new message
         message = Message.objects.create(
-            connection = connection,
-            user = user,
+            connection=connection,
+            user=user,
             text=message_text
         )
 
-        # Get recipient friend
+    # Get recipient friend
         recipient = connection.sender
         if connection.sender == user:
-            recipient = connection.receive_request_accept
+            recipient = connection.receiver
 
-        # Send new message back to sender
+    # Send new message back to sender
         serialized_message = MessageSerializer(
             message,
-            context={
-                'user': user
-            }
+            context={'user': user}
         )
-        serailized_friend = UserSerializer(recipient)
-        data = {
+        serialized_friend = UserSerializer(recipient)
+        sender_data = {
             'message': serialized_message.data,
-            'friend': serailized_friend.data
+            'friend': serialized_friend.data
         }
-        self.send_group(user.username, 'message.send', data)
+        self.send_group(user.username, 'message.send', sender_data)
 
-        # Send new message to receiver
+    # Send new message to receiver
         serialized_message = MessageSerializer(
             message,
-            context={
-                'user': recipient
-            }
+            context={'user': recipient}
         )
-        serailized_friend = UserSerializer(user)
-        data = {
+        serialized_friend = UserSerializer(user)
+        receiver_data = {
             'message': serialized_message.data,
-            'friend': serailized_friend.data
+            'friend': serialized_friend.data
         }
-        self.send_group(recipient.username, 'message.send', data)
+        self.send_group(recipient.username, 'message.send', receiver_data)
 
 
     def receive_request_accept(self, data):

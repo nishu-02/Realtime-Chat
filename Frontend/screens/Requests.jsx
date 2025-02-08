@@ -4,6 +4,7 @@ import Empty from "../common/Empty"
 import Row from "../common/Row"
 import Thumbnail from "../common/Thumbnail"
 import React from "react"
+import {formatTime} from "../core/utils"
 
 function RequestAccept({ item }) {
 	const requestAccept = useGlobal(state => state.requestAccept)
@@ -56,7 +57,7 @@ function RequestRow({ item }) {
 					}}
 				>
 					{message} <Text style={{ color: '#909090', fontSize: 13 }}>
-						{/* {utils.formatTime(item.created)} */}
+						{formatTime(item.created)}
 					</Text>
 				</Text>
 			</View>

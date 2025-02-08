@@ -84,6 +84,7 @@ class RequestSerializer(serializers.ModelSerializer):
 class FriendSerializer(serializers.ModelSerializer):
     friend = serializers.SerializerMethodField()
     preview = serializers.SerializerMethodField()
+    updated = serializers.SerializerMethodField()
 
     class Meta:
         model = Connection
@@ -104,9 +105,18 @@ class FriendSerializer(serializers.ModelSerializer):
         else:
             print('Error')
 
-    def get_preview(self, data):
-        return 'New Connection'
-    
+    def get_preview(self, obj):
+        if not hasattr(obj, 'latest_text'):
+            return 'New Connection'
+        return obj.latest_text
+
+    def get_updated(self, obj):
+        if not hasattr(obj, 'latest_created'):
+            date = obj.updated
+        else:
+            date = obj.latest_created or obj.updated
+        return date.isoformat()
+
 class MessageSerializer(serializers.ModelSerializer):
     is_me = serializers.SerializerMethodField()
 
@@ -120,4 +130,4 @@ class MessageSerializer(serializers.ModelSerializer):
         ]
     
     def get_is_me(self, obj):
-        return self.context['user'] == obj.user
+        return self.context['user'] == obj.user        # if not hasattr(obj, 'latest_text'):

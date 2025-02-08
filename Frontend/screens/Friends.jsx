@@ -3,6 +3,7 @@ import React from "react";
 import useGlobal from "../core/globalStore";
 import Thumbnail from "../common/Thumbnail";
 import Empty from "../common/Empty";
+import { formatTime } from "../core/utils";
 
 const colors = {
   primary: '#4F46E5',
@@ -19,17 +20,6 @@ const colors = {
   }
 };
 
-function formatTime(date) {
-  if (!date) return "-";
-  const now = new Date();
-  const sec = Math.abs(now - new Date(date)) / 1000;
-
-  if (sec < 60) return "Just now";
-  if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
-  if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
-  if (sec < 604800) return `${Math.floor(sec / 86400)}d ago`;
-  return "-";
-}
 
 function FriendRow({ navigation, item }) {
   const { friend, preview, updated } = item;

@@ -6,6 +6,7 @@ from django.core.files.base import ContentFile
 from .serializers import UserSerializer,SearchSerializer, RequestSerializer, FriendSerializer, MessageSerializer
 from .models import User, Connection, Message
 from django.db.models import Q, Exists, OuterRef
+from django.db.models.functions import Coalesce
 
 
 class ChatConsumer(WebsocketConsumer):
@@ -70,11 +71,23 @@ class ChatConsumer(WebsocketConsumer):
 
     def receive_friend_list(self, data):
         user = self.scope['user']
+        
+        #Latest message subquery
+        latest_message = Message.objects.filter(
+            connection = OuterRef('id')
+        ).order_by('-created')[:1]
+
         # Get connections for the user
         connection = Connection.objects.filter(
             Q(sender=user) | Q(receiver=user),
             accepted=True
+        ).annotate(
+            latest_text = latest_message.values('text'),
+            latest_created = latest_message.values('created')
+        ).order_by(
+            Coalesce('latest_created', 'updated').desc()
         )
+
         serialized = FriendSerializer(connection, context={'user':user}, many=True)
         # send data back to the user
         self.send_group(user.username, 'friend.list', serialized.data)
@@ -198,6 +211,27 @@ class ChatConsumer(WebsocketConsumer):
             connection.receiver.username, 'request.accept', serialized.data
         )
 
+        # Send new friend object to sender
+        serailized_friend = FriendSerializer(
+            connection,
+            context = {
+                'user': connection.sender
+            }
+        )
+        self.send_group(
+            connection.sender.username, 'friend.new', serailized_friend.data
+        )
+
+        # Send new friend object to receiver
+        serailized_friend = FriendSerializer(
+            connection,
+            context = {
+                'user': connection.receiver
+            }
+        )
+        self.send_group(
+            connection.receiver.username, 'friend.new', serailized_friend.data
+        )
 
     def receive_request_connect(self, data):
         username = data.get('username')

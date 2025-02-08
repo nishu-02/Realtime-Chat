@@ -106,9 +106,10 @@ class FriendSerializer(serializers.ModelSerializer):
             print('Error')
 
     def get_preview(self, obj):
+        default = 'New Connection'
         if not hasattr(obj, 'latest_text'):
-            return 'New Connection'
-        return obj.latest_text
+            return default
+        return obj.latest_text or default
 
     def get_updated(self, obj):
         if not hasattr(obj, 'latest_created'):

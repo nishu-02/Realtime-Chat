@@ -101,6 +101,7 @@ class ChatConsumer(WebsocketConsumer):
         user = self.scope['user']
         connectionId = data.get('connectionId')
         page = data.get('page')
+        page_size = 12 
         try:
             connection = Connection.objects.get(id = connectionId)
         except Connection.DoesNotExist:
@@ -109,7 +110,8 @@ class ChatConsumer(WebsocketConsumer):
         # Get Messages
         messages = Message.objects.filter(
             connection= connection
-        ).order_by('-created')
+        ).order_by('-created')[page * page_size:(page + 1) * page_size]
+
         # serailizing the message
 
         # the reason is it not serialized only bacuse we have to send to both persons
@@ -129,8 +131,15 @@ class ChatConsumer(WebsocketConsumer):
         # Serialize the friend
         serailized_friend = UserSerializer(recipient)
 
+        # Count the total number of messages for this connection
+        messages_count = Message.objects.filter(
+            connection = connection
+        ).count()
+
+
         data = {
             'messages': serialized_message.data,
+            'next': page + 1 if messages_count > (page + 1) * page_size else None,
             'friend': serailized_friend.data
         }
     

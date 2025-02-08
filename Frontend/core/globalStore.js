@@ -33,6 +33,7 @@ function responseFriendNew(set, get, friend) {
 function responseMessageList(set, get, data) {
   set((state) => ({
     messagesList: [...get().messagesList, ...data.messages],
+    messagesNext: data.next,
     messagesUsername: data.friend.username
   }));
 }
@@ -338,6 +339,7 @@ const useGlobal = create((set, get) => ({
   // Messages
 
   messagesList: [],
+  messagesNext:null,
   messagesTyping: null,
   messagesUsername: null,
 
@@ -346,8 +348,13 @@ const useGlobal = create((set, get) => ({
     if (page === 0) {
       set((state) => ({
         messagesList: [],
+        messagesNext: null,
         messagesTyping: null,
         messageUsername: null
+      }))
+    } else {
+      set((state) => ({
+        messagesNext: null,
       }))
     }
     const socket = get().socket;

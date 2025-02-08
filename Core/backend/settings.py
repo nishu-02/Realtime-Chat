@@ -37,13 +37,14 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.staticfiles',
     'daphne',
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
     'channels',
-    
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -74,13 +75,14 @@ MEDIA_URL = '/media/'
 ASGI_APPLICATION = 'backend.asgi.application'
 
 CHANNEL_LAYERS = {
-    'default':{
+    'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG' : {
-            'hosts':[('127.0.0.1', 6379)]
+        'CONFIG': {
+            'hosts': ["redis://red-cujjpnbv2p9s73828lj0:6379"],
         }
     }
 }
+
 
 
 #Daphne

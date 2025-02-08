@@ -25,9 +25,14 @@ SECRET_KEY = 'django-insecure-v$09o=(9amzo)4-f3puftm@c!j-9bepa8o5(3p=ij5-g(o_lcj
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*' , 'localhost', '192.162.0.2']
+ALLOWED_HOSTS = ['*' , 'localhost', 'https://realtime-chat-ye3n.onrender.com']
 
-CORS_ALLOWED_ORIGINS = ["http://localhost:8081", "http://127.0.0.1:5000"]
+CORS_ALLOWED_ORIGINS = [
+    "https://expo.dev",  # Expo hosting
+    "https://expo.dev/0264hendricks/Frontend",  # Your app link
+    "http://localhost:8081",  # Local development
+    "http://127.0.0.1:5000",
+]
 # Application definition
 
 INSTALLED_APPS = [
@@ -78,7 +83,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': ["redis://red-cujjpnbv2p9s73828lj0:6379"],
+            'hosts': ["redis://rewad-cujjpnbv2p9s73828lj0:6379"],
         }
     }
 }

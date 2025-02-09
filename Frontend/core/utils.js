@@ -1,6 +1,6 @@
 import Thumbnail from '../assets/thumbnail.png';
 
-const ADDRESS = '192.168.1.6:5000';
+const ADDRESS = 'https://realtime-chat-ye3n.onrender.com';
 
 export const log = (...args) => {
   args.forEach((arg) => {

@@ -255,7 +255,7 @@ const useGlobal = create((set, get) => ({
       return;
     }
 
-    const socketUrl = `ws://192.168.1.6:5000/chat/?token=${tokens.access}`;
+    const socketUrl = `wss://realtime-chat-ye3n.onrender.com/chat/?token=${tokens.access}`;
     console.log('WebSocket URL:', socketUrl);
 
     const socket = new WebSocket(socketUrl);

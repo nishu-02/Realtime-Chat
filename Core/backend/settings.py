@@ -14,8 +14,12 @@ from pathlib import Path
 import dj_database_url
 import os
 
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
 
 
 # Quick-start development settings - unsuitable for production
@@ -29,11 +33,24 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*' , 'localhost', 'https://realtime-chat-ye3n.onrender.com']
 
-CORS_ALLOWED_ORIGINS = [
-    "https://expo.dev",  # Expo hosting
-    "http://localhost:8081",  # Local development
+# CSRF Settings
+CSRF_TRUSTED_ORIGINS = [
+    "https://realtime-chat-ye3n.onrender.com",
+    "https://expo.dev",  # Add if using Expo
+    "http://localhost:8081",  # Local testing
     "http://127.0.0.1:5000",
 ]
+
+CORS_ALLOWED_ORIGINS = [
+    "https://realtime-chat-ye3n.onrender.com",
+    "https://expo.dev",
+    "http://localhost:8081",
+    "http://127.0.0.1:5000",
+]
+
+CSRF_COOKIE_SECURE = True  # Ensures CSRF cookie is only sent over HTTPS
+SESSION_COOKIE_SECURE = True  # Same for session cookie
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -56,8 +73,8 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -77,8 +94,6 @@ REST_FRAMEWORK = {
 MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = '/media/'
 
-# Channels
-ASGI_APPLICATION = 'backend.asgi.application'
 
 CHANNEL_LAYERS = {
     'default': {

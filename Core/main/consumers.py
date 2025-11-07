@@ -1,8 +1,10 @@
 import json
 import base64
 from channels.generic.websocket import WebsocketConsumer
+from django.contrib.auth.models import AnonymousUser
 from asgiref.sync import async_to_sync
 from django.core.files.base import ContentFile
+from django.utils import timezone
 from .serializers import UserSerializer,SearchSerializer, RequestSerializer, FriendSerializer, MessageSerializer
 from .models import User, Connection, Message
 from django.db.models import Q, Exists, OuterRef
@@ -12,9 +14,11 @@ from django.db.models.functions import Coalesce
 class ChatConsumer(WebsocketConsumer):
 
     def connect(self):
-        user = self.scope['user']
-        print(user,user.is_authenticated)
-        if not user.is_authenticated:
+        # guard against middleware that may not set 'user' on the scope
+        user = self.scope.get('user', AnonymousUser())
+        print('connect user:', user, getattr(user, 'is_authenticated', False))
+        if not getattr(user, 'is_authenticated', False):
+            # reject the connection if user is not authenticated
             return
         
         self.username = user.username
@@ -34,45 +38,62 @@ class ChatConsumer(WebsocketConsumer):
         
     # Handle Requests
     def receive(self, text_data):
-        # Receive message from websocket
-        data = json.loads(text_data)
-        data_source = data.get('source')
+        try:
+            # Receive message from websocket
+            data = json.loads(text_data)
+            data_source = data.get('source')
 
-        # python dict
-        print('receive', json.dumps(data, indent=2))
+            # python dict
+            print('receive', json.dumps(data, indent=2))
 
-        if data_source == 'friend.list':
-            self.receive_friend_list(data)
+            if data_source == 'friend.list':
+                self.receive_friend_list(data)
 
-        elif data_source == 'message.list':
-            self.receive_message_list(data)
+            elif data_source == 'message.list':
+                self.receive_message_list(data)
 
-        elif data_source == 'message.send':
-            self.receive_message_send(data)
+            elif data_source == 'message.send':
+                self.receive_message_send(data)
 
-        # User is typing
-        elif data_source == 'message.type':
-            self.receive_message_type(data)
+            # User is typing
+            elif data_source == 'message.type':
+                self.receive_message_type(data)
 
-        elif data_source == 'request.accept':
-            self.receive_request_accept(data)
+            # Message read receipt
+            elif data_source == 'message.read':
+                self.receive_message_read(data)
 
-        # Make friend request
-        elif data_source == 'request.connect':
-            self.receive_request_connect(data)
-        
-        # Get request List
-        elif data_source == 'request.list':
-            self.receive_request_list(data)      
-        
-        # Search / filter users
-        elif data_source == 'search':
-            self.receive_search(data)
+            # Message delete
+            elif data_source == 'message.delete':
+                self.receive_message_delete(data)
 
-        # Thumbnail upload
-        elif data_source == 'thumbnail':
-            # Save the thumbnail to the user's profile
-            self.receive_thumbnail(data)
+            # Message edit
+            elif data_source == 'message.edit':
+                self.receive_message_edit(data)
+
+            elif data_source == 'request.accept':
+                self.receive_request_accept(data)
+
+            # Make friend request
+            elif data_source == 'request.connect':
+                self.receive_request_connect(data)
+            
+            # Get request List
+            elif data_source == 'request.list':
+                self.receive_request_list(data)      
+            
+            # Search / filter users
+            elif data_source == 'search':
+                self.receive_search(data)
+
+            # Thumbnail upload
+            elif data_source == 'thumbnail':
+                # Save the thumbnail to the user's profile
+                self.receive_thumbnail(data)
+        except Exception as e:
+            print(f'ERROR in receive: {str(e)}')
+            import traceback
+            traceback.print_exc()
 
     def receive_friend_list(self, data):
         user = self.scope['user']
@@ -151,6 +172,8 @@ class ChatConsumer(WebsocketConsumer):
         user = self.scope['user']
         connectionId = data.get('connectionId')
         message_text = data.get('message')
+        media_data = data.get('media')  # Base64 encoded media
+        filename = data.get('filename')  # Media filename
     
         try:
             connection = Connection.objects.get(id=connectionId)
@@ -158,19 +181,29 @@ class ChatConsumer(WebsocketConsumer):
             print('error connection does not exist')
             return
     
-    # Create new message
+        # Create new message
         message = Message.objects.create(
             connection=connection,
             user=user,
-            text=message_text
+            text=message_text,
+            is_deleted=False
         )
+        
+        # Handle media if provided
+        if media_data and filename:
+            try:
+                media_file = ContentFile(base64.b64decode(media_data))
+                message.media.save(filename, media_file, save=True)
+                print(f'Media saved: {filename}')
+            except Exception as e:
+                print(f'Error saving media: {str(e)}')
 
-    # Get recipient friend
+        # Get recipient friend
         recipient = connection.sender
         if connection.sender == user:
             recipient = connection.receiver
 
-    # Send new message back to sender
+        # Send new message back to sender
         serialized_message = MessageSerializer(
             message,
             context={'user': user}
@@ -182,17 +215,18 @@ class ChatConsumer(WebsocketConsumer):
         }
         self.send_group(user.username, 'message.send', sender_data)
 
-    # Send new message to receiver
-        serialized_message = MessageSerializer(
-            message,
-            context={'user': recipient}
-        )
-        serialized_friend = UserSerializer(user)
-        receiver_data = {
-            'message': serialized_message.data,
-            'friend': serialized_friend.data
-        }
-        self.send_group(recipient.username, 'message.send', receiver_data)
+        # Send new message to receiver (only if different from sender)
+        if recipient.username != user.username:
+            serialized_message = MessageSerializer(
+                message,
+                context={'user': recipient}
+            )
+            serialized_friend = UserSerializer(user)
+            receiver_data = {
+                'message': serialized_message.data,
+                'friend': serialized_friend.data
+            }
+            self.send_group(recipient.username, 'message.send', receiver_data)
 
 
     def receive_message_type(self, data):
@@ -233,6 +267,14 @@ class ChatConsumer(WebsocketConsumer):
         self.send_group(
             connection.receiver.username, 'request.accept', serialized.data
         )
+
+        # Annotate connection with latest message data
+        latest_message = Message.objects.filter(
+            connection=connection
+        ).order_by('-created')[:1]
+        
+        connection.latest_text = latest_message.values_list('text', flat=True).first() if latest_message.exists() else None
+        connection.latest_created = latest_message.values_list('created', flat=True).first() if latest_message.exists() else connection.updated
 
         # Send new friend object to sender
         serailized_friend = FriendSerializer(
@@ -357,31 +399,200 @@ class ChatConsumer(WebsocketConsumer):
 
     # Catch/all broadcast to client helpers
     def send_group(self, group, source, data):
-        response = {
-            'type': 'broadcast_group',
-            'source': source,
-            'data': data
+        try:
+            response = {
+                'type': 'broadcast_group',
+                'source': source,
+                'data': data
+            }
+
+            # Send data to the group
+            async_to_sync(self.channel_layer.group_send)(
+                group, response
+            )
+        except Exception as e:
+            print(f'ERROR in send_group: {str(e)}')
+            import traceback
+            traceback.print_exc()
+
+    def receive_message_read(self, data):
+        """Handle message read receipt"""
+        user = self.scope['user']
+        messageId = data.get('messageId')
+
+        try:
+            message = Message.objects.get(id=messageId)
+        except Message.DoesNotExist:
+            print(f'error message does not exist: {messageId}')
+            return
+
+        # Add current user to read_by if not already there
+        if user not in message.read_by.all():
+            message.read_by.add(user)
+            message.status = 'read'
+            message.save()
+
+        # Get the other user in the conversation
+        connection = message.connection
+        recipient = connection.sender if connection.sender != user else connection.receiver
+
+        # Send updated message to both sender and receiver
+        serialized_message = MessageSerializer(
+            message,
+            context={'user': user}
+        )
+        
+        read_data = {
+            'message': serialized_message.data,
+            'read_by_user': user.username
         }
 
-        # Send data to the group
-        async_to_sync(self.channel_layer.group_send)(
-            group,response  # The response needs to be a dict
+        # Send to sender
+        self.send_group(user.username, 'message.read', read_data)
+        
+        # Send to recipient
+        self.send_group(recipient.username, 'message.read', read_data)
+
+    def receive_message_delete(self, data):
+        """Handle message deletion"""
+        user = self.scope['user']
+        messageId = data.get('messageId')
+
+        try:
+            message = Message.objects.get(id=messageId)
+        except Message.DoesNotExist:
+            print(f'error message does not exist: {messageId}')
+            return
+
+        # Verify the current user is the sender
+        if message.user != user:
+            print(f'error user {user.username} is not the sender of message {messageId}')
+            return
+
+        # Mark message as deleted
+        message.is_deleted = True
+        message.deleted_at = timezone.now()
+        message.save()
+
+        # Get the other user in the conversation
+        connection = message.connection
+        recipient = connection.sender if connection.sender != user else connection.receiver
+
+        # Send updated message to both sender and receiver
+        serialized_message = MessageSerializer(
+            message,
+            context={'user': user}
         )
+        
+        delete_data = {
+            'message': serialized_message.data,
+            'deleted_by_user': user.username
+        }
+
+        # Send to sender
+        self.send_group(user.username, 'message.delete', delete_data)
+        
+        # Send to recipient
+        self.send_group(recipient.username, 'message.delete', delete_data)
+
+    def receive_message_edit(self, data):
+        """Handle message editing"""
+        user = self.scope['user']
+        messageId = data.get('messageId')
+        new_text = data.get('text')
+        media_data = data.get('media')  # Base64 encoded media
+        filename = data.get('filename')  # Media filename
+
+        try:
+            message = Message.objects.get(id=messageId)
+        except Message.DoesNotExist:
+            print(f'error message does not exist: {messageId}')
+            return
+
+        # Verify the current user is the sender
+        if message.user != user:
+            print(f'error user {user.username} is not the sender of message {messageId}')
+            return
+
+        # Update message text
+        if new_text:
+            message.text = new_text
+        
+        # Handle media update if provided
+        if media_data and filename:
+            try:
+                # Delete old media if exists
+                if message.media:
+                    message.media.delete(save=False)
+                
+                # Save new media
+                media_file = ContentFile(base64.b64decode(media_data))
+                message.media.save(filename, media_file, save=False)
+                print(f'Media updated: {filename}')
+            except Exception as e:
+                print(f'Error updating media: {str(e)}')
+
+        # Mark as edited
+        message.edited_at = timezone.now()
+        message.save()
+
+        # Get the other user in the conversation
+        connection = message.connection
+        recipient = connection.sender if connection.sender != user else connection.receiver
+
+        # Send updated message to both sender and receiver
+        serialized_message = MessageSerializer(
+            message,
+            context={'user': user}
+        )
+        
+        edit_data = {
+            'message': serialized_message.data,
+            'edited_by_user': user.username
+        }
+
+        # Send to sender
+        self.send_group(user.username, 'message.edit', edit_data)
+        
+        # Send to recipient (if different)
+        if recipient.username != user.username:
+            serialized_message = MessageSerializer(
+                message,
+                context={'user': recipient}
+            )
+            edit_data = {
+                'message': serialized_message.data,
+                'edited_by_user': user.username
+            }
+            self.send_group(recipient.username, 'message.edit', edit_data)
 
     # Calling this response will call the function name `broadcast_group`
-    def broadcast_group(self, data):
+    def broadcast_group(self, event):
         '''
         event:
             type: 'broadcast_group'
             source: where it is originated from
             data: the data that is being sent as dict
         '''
-        data.pop('type')  # Remove the type key
+        try:
+            # Extract source and data from the event (type is already handled by Channels)
+            source = event.get('source')
+            data_payload = event.get('data')
 
-        '''
-        Return event:
-            source: where it is originated from
-            data: the data that is being sent as dict
-        '''
-        # Send the data back to the WebSocket
-        self.send(text_data=json.dumps(data))
+            '''
+            Return event:
+                source: where it is originated from
+                data: the data that is being sent as dict
+            '''
+            # Send the data back to the WebSocket
+            response_data = {
+                'source': source,
+                'data': data_payload
+            }
+            
+            print(f'broadcast_group sending: {json.dumps(response_data)}')
+            self.send(text_data=json.dumps(response_data))
+        except Exception as e:
+            print(f'ERROR in broadcast_group: {str(e)}')
+            import traceback
+            traceback.print_exc()

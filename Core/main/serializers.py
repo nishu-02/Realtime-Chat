@@ -8,6 +8,7 @@ class SignUpSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'username',
+            'email',
             'first_name',
             'last_name',
             'password'
@@ -19,10 +20,12 @@ class SignUpSerializer(serializers.ModelSerializer):
         }
     def create( self , validated_data):
         username = validated_data['username'].lower()
+        email = validated_data.get('email', '').lower()
         first_name = validated_data['first_name'].lower()
         last_name = validated_data['last_name'].lower()
         user = User.objects.create(
                 username=username,
+                email=email,
                 first_name=first_name,
                 last_name=last_name,
         )
@@ -32,19 +35,22 @@ class SignUpSerializer(serializers.ModelSerializer):
         return user
 
 class UserSerializer(serializers.ModelSerializer):
-    name= serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
     class Meta:
         model = User
         fields = [
             'username',
             'name',
-            'thumbnail'
+            'email',
+            'thumbnail',
+            'date_joined'
         ]
 
-    def get_name(self,obj):
-        fname = obj.first_name.capitalize()
-        lname = obj.last_name.capitalize()
-        return fname + ' ' + lname
+    def get_name(self, obj):
+        fname = obj.first_name.capitalize() if obj.first_name else ''
+        lname = obj.last_name.capitalize() if obj.last_name else ''
+        name = (fname + ' ' + lname).strip()
+        return name if name else obj.username
         
 
 class SearchSerializer(UserSerializer):
@@ -120,6 +126,8 @@ class FriendSerializer(serializers.ModelSerializer):
 
 class MessageSerializer(serializers.ModelSerializer):
     is_me = serializers.SerializerMethodField()
+    is_read = serializers.SerializerMethodField()
+    read_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
@@ -127,8 +135,19 @@ class MessageSerializer(serializers.ModelSerializer):
             'id',
             'is_me',
             'text',
+            'media',
+            'status',
+            'is_deleted',
+            'is_read',
+            'read_count',
             'created'
         ]
     
     def get_is_me(self, obj):
-        return self.context['user'] == obj.user        # if not hasattr(obj, 'latest_text'):
+        return self.context['user'] == obj.user
+
+    def get_is_read(self, obj):
+        return self.context['user'] in obj.read_by.all()
+
+    def get_read_count(self, obj):
+        return obj.read_by.count()

@@ -1,73 +1,90 @@
-import { TouchableOpacity, View} from "react-native";
 import React, { useEffect } from "react";
+import { TouchableOpacity, View, Text } from "react-native";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
 import ProfileScreen from "./Profile";
 import RequestScreen from "./Requests";
 import FriendsScreen from "./Friends";
-import useGlobal from "../core/globalStore";
 import Thumbnail from "../common/Thumbnail";
+import useGlobal from "../core/globalStore";
+
 const Tab = createBottomTabNavigator();
 
-function HomeScreen({navigation}) {
+function HomeScreen({ navigation }) {
   const user = useGlobal((state) => state.user);
   const socketConnect = useGlobal((state) => state.socketConnect);
   const socketClose = useGlobal((state) => state.socketClose);
 
   useEffect(() => {
     socketConnect();
-    return () => {
-      socketClose();
-    };
+    return () => socketClose();
   }, []);
 
-  function onSearch() {
-    navigation.navigate('Search')
-  }
+  const onSearch = () => navigation.navigate("Search");
 
   return (
     <Tab.Navigator
-      screenOptions={({ route, navigation }) => ({
+      initialRouteName="Friends"
+      screenOptions={({ route }) => ({
+        headerStyle: {
+          backgroundColor: "#fff",
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        headerTitleAlign: "center",
+        headerTitleStyle: {
+          fontSize: 18,
+          fontWeight: "600",
+          color: "#202020",
+        },
         headerLeft: () => (
-          <View
-            style={{
-              margin: 14,
-            }}
-          >
-            <Thumbnail url={user.thumbnail} size={45} />
+          <View style={{ marginLeft: 14 }}>
+            <Thumbnail url={user.thumbnail} size={42} />
           </View>
         ),
         headerRight: () => (
-          <TouchableOpacity 
-          onPress= {onSearch}
-
-          >
+          <TouchableOpacity onPress={onSearch}>
             <FontAwesomeIcon
-              style={{ marginRight: 18 }}
               icon="magnifying-glass"
-              size={24}
-              color="black"
+              size={22}
+              color="#202020"
+              style={{ marginRight: 18 }}
             />
           </TouchableOpacity>
         ),
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarStyle: {
+          backgroundColor: "#fff",
+          borderTopColor: "#e0e0e0",
+          height: 58,
+          paddingBottom: 5,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "500",
+        },
+        tabBarIcon: ({ focused, color }) => {
           const icons = {
             Requests: "bell",
             Friends: "inbox",
             Profile: "user",
           };
           const icon = icons[route.name];
-          return <FontAwesomeIcon icon={icon} size={27} color={color} />;
+          return (
+            <FontAwesomeIcon
+              icon={icon}
+              size={23}
+              color={focused ? "#00796B" : "#909090"}
+            />
+          );
         },
-        tabBarActiveTintColor: "teal",
-        tabBarInactiveTintColor: "thistle",
+        tabBarActiveTintColor: "#00796B", // clean teal
+        tabBarInactiveTintColor: "#909090",
       })}
     >
       <Tab.Screen name="Friends" component={FriendsScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
       <Tab.Screen name="Requests" component={RequestScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }

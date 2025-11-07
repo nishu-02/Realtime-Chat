@@ -21,3 +21,4 @@ Pillow==10.2.0  # (or the latest version)
 django-channels-jwt-auth-middleware
 dj-database-url
 psycopg2-binary
+python-dotenv

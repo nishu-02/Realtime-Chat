@@ -1,6 +1,0 @@
-run-android:
-	cd Frontend && npx expo start
-	
-server:
-	cd core && python manage.py runserver 0.0.0.0:5000
-	

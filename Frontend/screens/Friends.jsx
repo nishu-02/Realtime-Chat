@@ -90,7 +90,7 @@ export default function FriendsScreen({ navigation }) {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <FlatList
         data={friendList}
-        keyExtractor={item => item.id}
+        keyExtractor={(item, index) => `${item.id}-${item.friend.id}-${index}`}
         renderItem={({ item }) => (
           <FriendRow navigation={navigation} item={item} />
         )}

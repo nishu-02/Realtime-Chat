@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import secure from './secure';
 import api from './api';
 import utils from './utils';
+import { WS_BASE_URL, WS_SOURCES } from './constants';
 
 // Initial state definition
 const initialState = {
@@ -10,7 +11,12 @@ const initialState = {
   tokens: {},
   user: {},
   socket: null,
-  searchList: null
+  searchList: null,
+  reconnectAttempts: 0,
+  maxReconnectAttempts: 10,
+  reconnectDelay: 3000, // 3 seconds
+  reconnectTimer: null,
+  socketConnecting: false,
 };
 
 // Socket receive message handling
@@ -22,12 +28,27 @@ function responseFriendList(set, get, friendList) {
 }
 
 function responseFriendNew(set, get, friend) {
+  const currentList = get().friendList || [];
   
-  const friendList = [friend, ...get().friendList]
-
-  set((state) => ({
-    friendList: friendList
-  }))
+  // Check if friend already exists in the list
+  const existingIndex = currentList.findIndex(
+    f => f.id === friend.id || f.friend.username === friend.friend.username
+  );
+  
+  if (existingIndex >= 0) {
+    // Update existing friend instead of adding duplicate
+    const updatedList = [...currentList];
+    updatedList[existingIndex] = friend;
+    set((state) => ({
+      friendList: updatedList
+    }));
+  } else {
+    // Add new friend to the top of the list
+    const friendList = [friend, ...currentList];
+    set((state) => ({
+      friendList: friendList
+    }));
+  }
 }
 
 function responseMessageList(set, get, data) {
@@ -81,13 +102,13 @@ function responseMessageType(set, get, data) {
   if (data.username !== get().messagesUsername) return
 
   set((state) => ({
-    messagesTyping: new Data()
+    messagesTyping: new Date()
   }))
 }
 
 function responseRequestAccept(set, get, connection) {
   const user = get().user
-  // If I was the one the accepted the request, remove the request from the list
+  // If I was the one that accepted the request, remove the request from the list
 
   if (user.username === connection.receiver.username) {
     const requestList = [...get().requestList]
@@ -101,7 +122,7 @@ function responseRequestAccept(set, get, connection) {
       }))
     }
   }
-  // If the corresponding user is  contained within the searcLsit for the acceptor, update the state of the searchList item
+  // If the corresponding user is contained within the searchList, update the state of the searchList item
   const sl = get().searchList
   if (sl === null) {
     return
@@ -109,17 +130,20 @@ function responseRequestAccept(set, get, connection) {
   const searchList = [...sl]
 
   let searchIndex = -1;
-  // if the user is accepted
+  // Determine which user to look for in the search list
+  let usernameToFind = '';
+  
+  // If I (receiver) accepted the request, look for the sender
   if (user.username === connection.receiver.username) {
-    searchIndex = searchList.findIndex(
-      user => user.username === connection.receiver.username
-    )
+    usernameToFind = connection.sender.username
   } else {
-    // if the other user accepted
-    searchIndex = searchList.findIndex(
-      user => user.username === connection.receiver.username
-    )
+    // If I (sender) had my request accepted, look for the receiver
+    usernameToFind = connection.receiver.username
   }
+
+  searchIndex = searchList.findIndex(
+    item => item.username === usernameToFind
+  )
 
   if (searchIndex >= 0) {
     searchList[searchIndex].status = 'connected'
@@ -164,6 +188,36 @@ function responseRequestList(set, get, requestList) {
   set((state) => ({
     requestList: requestList
   }))
+}
+
+function responseMessageRead(set, get, data) {
+  // Update the message in the messagesList with the new read status
+  const messagesList = get().messagesList || [];
+  const updatedList = messagesList.map(msg => {
+    if (msg.id === data.message.id) {
+      return data.message; // Replace with updated message from server
+    }
+    return msg;
+  });
+
+  set((state) => ({
+    messagesList: updatedList
+  }));
+}
+
+function responseMessageDelete(set, get, data) {
+  // Update the message in the messagesList with the deleted status
+  const messagesList = get().messagesList || [];
+  const updatedList = messagesList.map(msg => {
+    if (msg.id === data.message.id) {
+      return data.message; // Replace with updated message from server
+    }
+    return msg;
+  });
+
+  set((state) => ({
+    messagesList: updatedList
+  }));
 }
 
 function responseSearch(set, get, data) {
@@ -249,74 +303,127 @@ const useGlobal = create((set, get) => ({
   },
 
   socketConnect: async () => {
-    const tokens = await secure.get('tokens');
-    if (!tokens || !tokens.access) {
-      console.error('No tokens found.');
+    const state = get();
+    
+    // Prevent multiple simultaneous connection attempts
+    if (state.socketConnecting) {
+      console.log('Connection already in progress');
       return;
     }
 
-    const socketUrl = `wss://realtime-chat-ye3n.onrender.com/chat/?token=${tokens.access}`;
+    set({ socketConnecting: true });
+
+    const tokens = await secure.get('tokens');
+    if (!tokens || !tokens.access) {
+      console.error('No tokens found.');
+      set({ socketConnecting: false });
+      return;
+    }
+
+    const socketUrl = `${WS_BASE_URL}/chat/?token=${tokens.access}`;
     console.log('WebSocket URL:', socketUrl);
 
-    const socket = new WebSocket(socketUrl);
+    try {
+      const socket = new WebSocket(socketUrl);
 
-    socket.onopen = () => {
-      console.log('WebSocket connected');
-      socket.send(JSON.stringify({
-        source: 'request.list'
-      }))
-      socket.send(JSON.stringify({
-        source: 'friend.list'
-      }))
-    };
-
-    socket.onmessage = (event) => {
-      const parsed = JSON.parse(event.data);
-      utils.log('onmessage', parsed);
-      console.log('WebSocket received:', parsed);
-
-      const responses = {
-        'friend.list': responseFriendList,
-        'friend.new': responseFriendNew,
-        'message.list': responseMessageList,
-        'message.send': responseMessageSend,
-        'message.type': responseMessageType,
-        'requestAccept': responseRequestAccept,
-        'request.connect': responseRequestConnect,
-        'request.list': responseRequestList,
-        'search': responseSearch,
-        'thumbnail': responseThumbnail
+      socket.onopen = () => {
+        console.log('WebSocket connected');
+        set({ 
+          reconnectAttempts: 0,
+          socketConnecting: false
+        });
+        socket.send(JSON.stringify({
+          source: WS_SOURCES.REQUEST_LIST
+        }))
+        socket.send(JSON.stringify({
+          source: WS_SOURCES.FRIEND_LIST
+        }))
       };
 
-      const resp = responses[parsed.source];
-      if (!resp) {
-        utils.log('parsed.source ' + parsed.source + ' not found');
-        return;
-      }
+      socket.onmessage = (event) => {
+        const parsed = JSON.parse(event.data);
+        utils.log('onmessage', parsed);
+        console.log('WebSocket received:', parsed);
 
-      resp(set, get, parsed.data);
-    };
+        const responses = {
+          [WS_SOURCES.FRIEND_LIST]: responseFriendList,
+          [WS_SOURCES.FRIEND_NEW]: responseFriendNew,
+          [WS_SOURCES.MESSAGE_LIST]: responseMessageList,
+          [WS_SOURCES.MESSAGE_SEND]: responseMessageSend,
+          [WS_SOURCES.MESSAGE_TYPE]: responseMessageType,
+          [WS_SOURCES.MESSAGE_READ]: responseMessageRead,
+          [WS_SOURCES.MESSAGE_DELETE]: responseMessageDelete,
+          [WS_SOURCES.REQUEST_ACCEPT]: responseRequestAccept,
+          [WS_SOURCES.REQUEST_CONNECT]: responseRequestConnect,
+          [WS_SOURCES.REQUEST_LIST]: responseRequestList,
+          [WS_SOURCES.SEARCH]: responseSearch,
+          [WS_SOURCES.THUMBNAIL]: responseThumbnail
+        };
 
-    socket.onerror = (e) => {
-      console.error('WebSocket error:', e.message);
-    };
+        const resp = responses[parsed.source];
+        if (!resp) {
+          utils.log('parsed.source ' + parsed.source + ' not found');
+          return;
+        }
 
-    socket.onclose = () => {
-      console.log('WebSocket closed');
-    };
+        resp(set, get, parsed.data);
+      };
 
-    set({ socket });
+      socket.onerror = (e) => {
+        console.error('WebSocket error:', e.message);
+      };
+
+      socket.onclose = (event) => {
+        console.log('WebSocket closed. Code:', event.code, 'Reason:', event.reason);
+        set({ socketConnecting: false });
+        
+        // Attempt to reconnect if not manually closed
+        const state = get();
+        if (event.code !== 1000 && state.reconnectAttempts < state.maxReconnectAttempts) {
+          const nextAttempt = state.reconnectAttempts + 1;
+          const delay = state.reconnectDelay * Math.pow(1.5, state.reconnectAttempts);
+          
+          console.log(`Reconnecting (attempt ${nextAttempt}/${state.maxReconnectAttempts}) in ${Math.round(delay / 1000)}s...`);
+          
+          set({ reconnectAttempts: nextAttempt });
+          
+          const timer = setTimeout(() => {
+            get().socketConnect();
+          }, delay);
+          
+          set({ reconnectTimer: timer });
+        } else if (state.reconnectAttempts >= state.maxReconnectAttempts) {
+          console.error('Max reconnection attempts reached');
+        }
+      };
+
+      set({ socket });
+    } catch (error) {
+      console.error('Failed to create WebSocket:', error);
+      set({ socketConnecting: false });
+    }
   },
 
   socketClose: () => {
     set((state) => {
+      // Clear any pending reconnection timers
+      if (state.reconnectTimer) {
+        clearTimeout(state.reconnectTimer);
+      }
+      
       if (state.socket) {
-        state.socket.close();
+        state.socket.close(1000); // Close with code 1000 (normal closure)
         console.log('Socket manually closed');
       } else {
         console.log('No open WebSocket connection to close');
       }
-      return { socket: null };
+      
+      return { 
+        socket: null,
+        reconnectAttempts: 0,
+        reconnectTimer: null,
+        socketConnecting: false
+      };
     });
   },
 
@@ -324,7 +431,7 @@ const useGlobal = create((set, get) => ({
     if (query) {
       const socket = get().socket
       socket.send(JSON.stringify({
-        source: 'search',
+        source: WS_SOURCES.SEARCH,
         query: query
       }))
     } else {
@@ -350,7 +457,7 @@ const useGlobal = create((set, get) => ({
         messagesList: [],
         messagesNext: null,
         messagesTyping: null,
-        messageUsername: null
+        messagesUsername: null
       }))
     } else {
       set((state) => ({
@@ -359,7 +466,7 @@ const useGlobal = create((set, get) => ({
     }
     const socket = get().socket;
     socket.send(JSON.stringify({
-      source: 'message.list',
+      source: WS_SOURCES.MESSAGE_LIST,
       connectionId: connectionId,
       page: page
     }))
@@ -368,7 +475,7 @@ const useGlobal = create((set, get) => ({
   messageSend: (connectionId, message) => {
     const socket = get().socket;
     socket.send(JSON.stringify({
-      source: 'message.send',
+      source: WS_SOURCES.MESSAGE_SEND,
       connectionId: connectionId,
       message: message
     }))
@@ -377,7 +484,7 @@ const useGlobal = create((set, get) => ({
   messageType: (username) => {
     const socket = get().socket;
     socket.send(JSON.stringify({
-      source: 'message.type',
+      source: WS_SOURCES.MESSAGE_TYPE,
       username: username
     }))
   },
@@ -388,7 +495,7 @@ const useGlobal = create((set, get) => ({
   requestAccept: (username) => {
     const socket = get().socket;
     socket.send(JSON.stringify({
-      source: 'request.accept',
+      source: WS_SOURCES.REQUEST_ACCEPT,
       username: username,
     }));
   },
@@ -396,15 +503,31 @@ const useGlobal = create((set, get) => ({
   requestConnect: (username) => {
     const socket = get().socket;
     socket.send(JSON.stringify({
-      source: 'request.connect',
+      source: WS_SOURCES.REQUEST_CONNECT,
       username: username,
+    }));
+  },
+
+  messageDelete: (messageId) => {
+    const socket = get().socket;
+    socket.send(JSON.stringify({
+      source: WS_SOURCES.MESSAGE_DELETE,
+      messageId: messageId,
+    }));
+  },
+
+  messageRead: (messageId) => {
+    const socket = get().socket;
+    socket.send(JSON.stringify({
+      source: WS_SOURCES.MESSAGE_READ,
+      messageId: messageId,
     }));
   },
 
   uploadThumbnail: (file) => {
     const socket = get().socket;
     socket.send(JSON.stringify({
-      source: 'thumbnail',
+      source: WS_SOURCES.THUMBNAIL,
       base64: file.base64,
       filename: file.fileName
     }));

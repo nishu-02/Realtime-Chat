@@ -18,13 +18,13 @@ async function get(key) {
         return null;
     } catch (error) {
         console.log('secure.get', error);
-        return null;t
+        return null;
     }
 }
 
 async function remove(key) {
     try {
-        await EncryptedStorage.removeItem(key, JSON.stringify(key));
+        await EncryptedStorage.removeItem(key);
     } catch (error) {
         console.log('secure.remove', error);
     }

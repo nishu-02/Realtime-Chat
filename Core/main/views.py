@@ -24,17 +24,29 @@ class SignInView(APIView):
     
     def post(self, request):
         print("Received data:", request.data)  # For debugging
-        username = request.data.get('username')
+        username_or_email = request.data.get('username')
         password = request.data.get('password')
 
         logger.debug(request.data)  # Log the request data
     
-        if not username or not password:
-            return Response({'error': 'username or password is required'}, status=400)
+        if not username_or_email or not password:
+            return Response({'error': 'username or email and password are required'}, status=400)
     
-        user = authenticate(request, username=username, password=password)
+        # First try to authenticate with username
+        user = authenticate(request, username=username_or_email, password=password)
+        
+        # If username authentication fails, try email
         if not user:
-            return Response({'error': 'invalid username or password'}, status=401)
+            try:
+                # Find user by email
+                user_obj = User.objects.get(email=username_or_email)
+                # Authenticate with the username
+                user = authenticate(request, username=user_obj.username, password=password)
+            except User.DoesNotExist:
+                pass
+        
+        if not user:
+            return Response({'error': 'invalid username/email or password'}, status=401)
     
         user_data = get_auth_for_user(user)
         return Response(user_data)

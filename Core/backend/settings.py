@@ -14,6 +14,21 @@ from pathlib import Path
 import dj_database_url
 import os
 
+# Load .env (if present) so os.getenv() picks up DATABASE_URL during development.
+# This uses python-dotenv which we added to requirements.txt. If python-dotenv
+# is not installed, this will silently continue and the environment variables
+# will be read from the environment as usual.
+try:
+    from dotenv import load_dotenv
+    # Look for a .env file in the project Core directory (same directory as BASE_DIR)
+    # Resolve path relative to this file's parent parent (i.e., Core/)
+    env_path = Path(__file__).resolve().parent.parent / '.env'
+    if env_path.exists():
+        load_dotenv(env_path)
+except Exception:
+    # If dotenv isn't installed or fails, continue — os.getenv will still work.
+    pass
+
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -31,25 +46,12 @@ SECRET_KEY = 'django-insecure-v$09o=(9amzo)4-f3puftm@c!j-9bepa8o5(3p=ij5-g(o_lcj
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*' , 'localhost', 'https://realtime-chat-ye3n.onrender.com']
+ALLOWED_HOSTS = ['*' , 'localhost']
 
-# CSRF Settings
-CSRF_TRUSTED_ORIGINS = [
-    "https://realtime-chat-ye3n.onrender.com",
-    "https://expo.dev",  # Add if using Expo
-    "http://localhost:8081",  # Local testing
-    "http://127.0.0.1:5000",
-]
-
-CORS_ALLOWED_ORIGINS = [
-    "https://realtime-chat-ye3n.onrender.com",
-    "https://expo.dev",
-    "http://localhost:8081",
-    "http://127.0.0.1:5000",
-]
-
-CSRF_COOKIE_SECURE = True  # Ensures CSRF cookie is only sent over HTTPS
-SESSION_COOKIE_SECURE = True  # Same for session cookie
+# For development only - disable CSRF for local testing
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
+CSRF_TRUSTED_ORIGINS = ['http://192.168.1.5:8000', 'http://localhost:8000', 'http://127.0.0.1:8000']
 
 # Application definition
 
@@ -75,7 +77,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',  # Disabled for development
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -99,7 +101,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': ["redis://rewad-cujjpnbv2p9s73828lj0:6379"],
+            'hosts': [('127.0.0.1', 6379)],
         }
     }
 }
@@ -135,7 +137,7 @@ DATABASES = {
     'default': dj_database_url.config(
         default=os.getenv("DATABASE_URL"),  # Render environment variable
         conn_max_age=600,  # Keep connection alive for better performance
-        ssl_require=True   # Ensure secure connection
+        # ssl_require=True   # Ensure secure connection
     )
 }
 
@@ -178,6 +180,9 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },

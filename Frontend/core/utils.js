@@ -1,6 +1,5 @@
 import Thumbnail from '../assets/thumbnail.png';
-
-const ADDRESS = 'https://realtime-chat-ye3n.onrender.com';
+import { ADDRESS } from './api';
 
 export const log = (...args) => {
   args.forEach((arg) => {
@@ -27,7 +26,7 @@ export const thumbnail = (url) => {
   }
   const hasScheme = url.startsWith("http://") || url.startsWith("https://");
   return {
-    uri: hasScheme ? url : `http://${ADDRESS}${url}`,
+    uri: hasScheme ? url : `${ADDRESS}${url}`,
   };
 };
 
